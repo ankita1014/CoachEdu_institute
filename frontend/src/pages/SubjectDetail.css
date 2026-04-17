@@ -1,0 +1,126 @@
+.subject-page {
+  padding: 30px;
+}
+
+/* HEADER */
+.subject-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.subject-header h2 {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.back-btn {
+  background: #eee;
+  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+/* TABS */
+.tabs {
+  display: flex;
+  gap: 20px;
+  margin: 20px 0;
+}
+
+.tabs button {
+  background: none;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  padding-bottom: 5px;
+}
+
+.tabs .active {
+  border-bottom: 3px solid #6c63ff;
+}
+
+/* ADD SKILL */
+.add-skill {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.add-skill input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+}
+
+.add-skill button {
+  background: #6c63ff;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 10px;
+}
+
+/* GRID */
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+/* CARD */
+.skill-card {
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+  position: relative;
+}
+
+.skill-card h3 {
+  margin-bottom: 10px;
+}
+
+.skill-card ul {
+  padding-left: 18px;
+  margin-bottom: 10px;
+}
+
+.count {
+  font-size: 12px;
+  color: gray;
+}
+
+/* ADD CHAPTER */
+.add-chapter {
+  display: flex;
+  gap: 5px;
+}
+
+.add-chapter input {
+  flex: 1;
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.add-chapter button {
+  background: #6c63ff;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+/* ADD CARD */
+.add-card {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #6c63ff;
+  font-weight: bold;
+  cursor: pointer;
+  border: 2px dashed #ccc;
+}

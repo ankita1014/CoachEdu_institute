@@ -1,0 +1,39 @@
+.layout {
+  display: flex;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 220px;
+  background: #1e1e2f;
+  color: white;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.logo {
+  margin-bottom: 30px;
+}
+
+.nav-item {
+  display: block;
+  padding: 10px;
+  margin-bottom: 10px;
+  color: #bbb;
+  text-decoration: none;
+  border-radius: 8px;
+}
+
+.nav-item:hover {
+  background: #2e2e40;
+}
+
+.nav-item.active {
+  background: #6c63ff;
+  color: white;
+}
+
+/* MAIN */
+.main-content {
+  flex: 1;
+}

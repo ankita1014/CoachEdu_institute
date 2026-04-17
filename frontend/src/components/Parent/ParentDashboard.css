@@ -1,0 +1,50 @@
+.parent-dashboard {
+  padding: 30px;
+}
+
+.fee-box {
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+}
+
+.timeline {
+  margin-top: 20px;
+}
+
+.timeline-item {
+  background: #f3f4f6;
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 10px;
+}
+
+.notifications {
+  margin-top: 20px;
+}
+
+.notification {
+  background: #ffe4e6;
+  padding: 10px;
+  border-radius: 10px;
+  margin: 8px 0;
+}
+
+.status {
+  padding: 5px 10px;
+  border-radius: 10px;
+}
+
+.status.paid {
+  background: #dcfce7;
+}
+
+.status.pending {
+  background: #fee2e2;
+}
+
+.status.partial {
+  background: #fef9c3;
+}

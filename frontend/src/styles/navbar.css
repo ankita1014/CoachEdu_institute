@@ -1,0 +1,203 @@
+/* ═══════════════════════════════════════════════════════════
+   UNIFIED NAVBAR — used across all public pages
+   ═══════════════════════════════════════════════════════════ */
+
+.site-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.site-nav--scrolled {
+  background: rgba(255,255,255,0.95);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+/* on home page, navbar is inside the card — no fixed positioning */
+.site-nav--home {
+  position: relative;
+  background: #fff;
+  border-bottom: 1px solid #f1f5f9;
+  backdrop-filter: none;
+}
+
+.site-nav__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 68px;
+}
+
+/* ── logo ── */
+.site-nav__logo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+.site-nav__logo-img {
+  height: 38px;
+  object-fit: contain;
+}
+.site-nav__brand {
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: #1e2a78;
+  white-space: nowrap;
+}
+.site-nav__brand span { color: #6c63ff; }
+
+/* ── links ── */
+.site-nav__links {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.site-nav__link {
+  text-decoration: none;
+  color: #374151;
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 7px 12px;
+  border-radius: 8px;
+  transition: background 0.15s, color 0.15s;
+}
+.site-nav__link:hover,
+.site-nav__link--active {
+  background: #f1f5f9;
+  color: #1e2a78;
+}
+
+/* ── CTA button (Login / Dashboard) ── */
+.site-nav__cta {
+  background: #1e2a78;
+  color: #fff !important;
+  padding: 8px 18px !important;
+  border-radius: 20px !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  border: none;
+  cursor: pointer;
+  text-decoration: none !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: background 0.18s, transform 0.18s;
+}
+.site-nav__cta:hover {
+  background: #2d3a9a !important;
+  transform: translateY(-1px);
+}
+
+.site-nav__caret {
+  font-size: 0.7rem;
+  margin-left: 2px;
+}
+
+/* ── logout button ── */
+.site-nav__logout {
+  background: none;
+  border: 1.5px solid #e2e8f0;
+  color: #64748b;
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.site-nav__logout:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+/* ── login dropdown ── */
+.site-nav__drop-wrap {
+  position: relative;
+}
+
+.site-nav__dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+  overflow: hidden;
+  min-width: 180px;
+  z-index: 200;
+}
+
+.site-nav__drop-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 18px;
+  text-align: left;
+  background: none;
+  border: none;
+  font-size: 0.88rem;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.site-nav__drop-item:hover {
+  background: #f8fafc;
+  color: #1e2a78;
+}
+
+.site-nav__drop-icon {
+  font-size: 0.9rem;
+  color: #94a3b8;
+}
+
+/* ── hamburger ── */
+.site-nav__hamburger {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  color: #1e2a78;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* ════════════════════════════════
+   RESPONSIVE
+   ════════════════════════════════ */
+@media (max-width: 768px) {
+  .site-nav__inner { padding: 0 16px; height: 60px; }
+
+  .site-nav__links {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    flex-direction: column;
+    padding: 16px;
+    border-bottom: 1px solid #e8edf3;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    gap: 4px;
+  }
+  .site-nav__links--open { display: flex; }
+
+  .site-nav__hamburger { display: block; }
+
+  .site-nav__link { width: 100%; text-align: left; }
+  .site-nav__cta { width: 100% !important; justify-content: center; }
+  .site-nav__logout { width: 100%; }
+}
