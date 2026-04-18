@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import heroIllustration from '../assets/hero-education.jpg';
 
 const Hero = () => {
-  const [studentCount, setStudentCount] = useState(null);
+  const [studentCount, setStudentCount] = useState('14');
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/student/students`)
@@ -13,7 +13,7 @@ const Hero = () => {
   }, []);
 
   const stats = [
-    { value: studentCount ?? '…', label: 'Students' },
+    { value: studentCount, label: 'Students' },
     { value: '4',          label: 'Courses'  },
     { value: '95%',        label: 'Success'  },
   ];
