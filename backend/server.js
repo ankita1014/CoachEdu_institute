@@ -34,6 +34,9 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
   process.env.FRONTEND_URL,
+  // always allow both www and non-www variants
+  "https://coachedu.online",
+  "https://www.coachedu.online",
 ].filter(Boolean);
 
 app.use(cors({
