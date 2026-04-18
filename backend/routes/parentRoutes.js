@@ -198,7 +198,7 @@ router.get("/dashboard/:parentId", async (req, res) => {
 // ================= PUBLIC REVIEWS =================
 router.get("/reviews", async (req, res) => {
   try {
-    const parents = await Parent.find({}, "name review childName studentId").limit(20);
+    const parents = await Parent.find({}, "name review").lean();
 
     const fallbackReviews = [
       "Very satisfied with my child's progress at this institute.",
@@ -207,20 +207,22 @@ router.get("/reviews", async (req, res) => {
       "Best coaching for building strong academic basics.",
     ];
 
-    const staticNames = ["Priya Deshmukh", "Rajesh Patil", "Sneha Kulkarni", "Anita Sharma"];
-
+    // Use real parent names, assign fallback reviews if no review field
     const reviews = parents
-      .filter((p) => p.name)
+      .filter((p) => p.name && p.name.trim() && p.name !== "Parent")
       .slice(0, 4)
       .map((p, i) => ({
-        name: p.name,
-        review: p.review || fallbackReviews[i % fallbackReviews.length],
+        name: p.name.trim(),
+        review: (p.review && p.review.trim()) || fallbackReviews[i % fallbackReviews.length],
       }));
 
     if (reviews.length === 0) {
       return res.json({
         success: true,
-        reviews: staticNames.map((name, i) => ({ name, review: fallbackReviews[i] })),
+        reviews: fallbackReviews.map((review, i) => ({
+          name: ["Priya Deshmukh", "Rajesh Patil", "Sneha Kulkarni", "Anita Sharma"][i],
+          review,
+        })),
       });
     }
 
