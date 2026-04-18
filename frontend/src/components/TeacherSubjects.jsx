@@ -12,7 +12,7 @@ const SUBJECTS = [
 
 const FILTERS = ["All Subjects", "Languages", "Mathematics"];
 
-const API = "import.meta.env.VITE_API_URL/subjects";
+const API = `${import.meta.env.VITE_API_URL}/subjects`;
 
 const TeacherSubjects = () => {
   const navigate = useNavigate();

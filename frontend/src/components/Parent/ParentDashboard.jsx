@@ -8,14 +8,14 @@ const ParentDashboard = () => {
   const studentId = localStorage.getItem("studentId"); // 👈 parent ka student
 
   useEffect(() => {
-    fetch(`import.meta.env.VITE_API_URL/student/fees`)
+    fetch(`${import.meta.env.VITE_API_URL}/student/fees`)
       .then(res => res.json())
       .then(data => {
         const record = data.data.find(f => f.studentId === studentId);
         setFees(record);
       });
 
-    fetch(`import.meta.env.VITE_API_URL/student/notifications/${studentId}`)
+    fetch(`${import.meta.env.VITE_API_URL}/student/notifications/${studentId}`)
       .then(res => res.json())
       .then(data => setNotifications(data.data || []));
   }, []);

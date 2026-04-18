@@ -8,7 +8,7 @@ import NotificationTable from "./teacherDashboard/NotificationTable";
 import { useAuth } from "../context/AuthContext";
 import "./TeacherNotifications.css";
 
-const API_BASE_URL = "import.meta.env.VITE_API_URL";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const PAGE_SIZE = 5;
 
 const initialForm = {

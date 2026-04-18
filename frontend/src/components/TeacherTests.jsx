@@ -230,7 +230,7 @@ const TeacherTests = () => {
 
   const teacherId   = user?.teacherId || user?._id || user?.id || "";
   const teacherName = user?.name || "Teacher";
-  const apiBase     = "import.meta.env.VITE_API_URL/teacher/tests";
+  const apiBase     = `${import.meta.env.VITE_API_URL}/teacher/tests`;
 
   const resetBuilder = () => {
     setDetails(blankDetails);

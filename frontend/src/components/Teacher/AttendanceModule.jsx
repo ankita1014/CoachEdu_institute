@@ -5,7 +5,7 @@ import StudentCard from "../teacherDashboard/StudentCard";
 import SummaryCard from "../teacherDashboard/SummaryCard";
 import "./AttendanceModule.css";
 
-const API = "import.meta.env.VITE_API_URL";
+const API = import.meta.env.VITE_API_URL;
 const TODAY = new Date().toISOString().split("T")[0];
 
 const AttendanceModule = () => {

@@ -12,7 +12,7 @@ const SkillsModal = ({ subject, close }) => {
   const fetchChapters = async (skillName) => {
     try {
       const res = await axios.get(
-        `import.meta.env.VITE_API_URL/chapters/${skillName}`
+        `${import.meta.env.VITE_API_URL}/chapters/${skillName}`
       );
       setChapters(res.data);
     } catch (err) {
@@ -25,7 +25,7 @@ const SkillsModal = ({ subject, close }) => {
     if (!newChapter || !activeSkill) return;
 
     try {
-      await axios.post("import.meta.env.VITE_API_URL/chapters", {
+      await axios.post(`${import.meta.env.VITE_API_URL}/chapters`, {
         skillName: activeSkill,
         subjectName: subject.name,
         chapterName: newChapter,
@@ -41,7 +41,7 @@ const SkillsModal = ({ subject, close }) => {
   // DELETE
   const deleteChapter = async (id) => {
     try {
-      await axios.delete(`import.meta.env.VITE_API_URL/chapters/${id}`);
+      await axios.delete(`${import.meta.env.VITE_API_URL}/chapters/${id}`);
       fetchChapters(activeSkill);
     } catch (err) {
       console.log(err);

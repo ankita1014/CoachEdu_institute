@@ -4,7 +4,7 @@ const TrustBar = () => {
   const [studentCount, setStudentCount] = useState('13');
 
   useEffect(() => {
-    fetch('import.meta.env.VITE_API_URL/student/students')
+    fetch(`${import.meta.env.VITE_API_URL}/student/students`)
       .then((r) => r.json())
       .then((d) => { if (d.success && Array.isArray(d.students)) setStudentCount(String(d.students.length)); })
       .catch(() => {});

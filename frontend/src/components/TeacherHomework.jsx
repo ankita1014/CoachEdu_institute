@@ -217,7 +217,7 @@ const TeacherHomework = () => {
 
   const teacherId   = user?.teacherId || user?._id || user?.id || "";
   const teacherName = user?.name || "Teacher";
-  const apiBase     = "import.meta.env.VITE_API_URL/teacher/homework";
+  const apiBase     = `${import.meta.env.VITE_API_URL}/teacher/homework`;
 
   const resetForm = () => {
     setFormData(initialForm);

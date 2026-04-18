@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../styles/TestAttempt.css";
 
-const API = "import.meta.env.VITE_API_URL/student";
+const API = `${import.meta.env.VITE_API_URL}/student`;
 
 // ── Result screen shown after submission ──────────────────────────────────────
 const ResultScreen = ({ result, test, onBack }) => {

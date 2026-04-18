@@ -4,7 +4,7 @@ import Toast from "./Toast";
 import { useAuth } from "../context/AuthContext";
 import "./StudentDashboard.css";
 
-const API_BASE_URL = "import.meta.env.VITE_API_URL/student";
+const API_BASE_URL = `${import.meta.env.VITE_API_URL}/student`;
 const POLL_INTERVAL = 30000;
 
 const formatDate = (value) => {

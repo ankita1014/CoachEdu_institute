@@ -4,7 +4,7 @@ import StudentProfileModal from "./StudentProfileModal";
 import Toast from "../Toast";
 import "./StudentsModule.css";
 
-const API = "import.meta.env.VITE_API_URL/student";
+const API = `${import.meta.env.VITE_API_URL}/student`;
 
 const StudentModule = () => {
   const [students, setStudents] = useState([]);
