@@ -20,7 +20,7 @@ const Testimonials = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/parent/reviews')
+    fetch('import.meta.env.VITE_API_URL/parent/reviews')
       .then((r) => r.json())
       .then((d) => { if (d.success && d.reviews?.length) setReviews(d.reviews.slice(0, 4)); })
       .catch(() => {})

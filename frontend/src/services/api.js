@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const isLocal = import.meta.env.DEV;
-const baseURL = isLocal ? 'http://localhost:5000/api' : import.meta.env.VITE_API_URL;
+const baseURL = isLocal ? 'import.meta.env.VITE_API_URL' : import.meta.env.VITE_API_URL;
 
 const api = axios.create({
   baseURL,
@@ -237,7 +237,7 @@ export const contestsAPI = {
   },
 };
 
-const BASE = "http://localhost:5000/api/subjects";
+const BASE = "import.meta.env.VITE_API_URL/subjects";
 
 export const getSubject = async (name) => {
   const res = await fetch(`${BASE}/${name}`);

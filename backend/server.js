@@ -22,6 +22,7 @@ import inquiryRoutes from "./routes/inquiryRoutes.js";
 import { syncAllParents } from "./utils/parentSync.js";
 import { syncPasswordFormat } from "./utils/parentSync.js";
 dotenv.config();
+console.log("ENV CHECK:", process.env.MONGO_URI);
 connectDB().then(() => {
   syncAllParents();
   syncPasswordFormat();
@@ -29,9 +30,19 @@ connectDB().then(() => {
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:5173",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
 app.use(cors({
-  origin:"http://localhost:3000",
-  credentials:true
+  origin: (origin, callback) => {
+    // allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
 }));
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));

@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import Toast from "../Toast";
 import "./FeesModule.css";
 
-const API = "http://localhost:5000/api";
+const API = "import.meta.env.VITE_API_URL";
 const TODAY = new Date().toISOString().split("T")[0];
 
 // ── Progress bar ──────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 
-const API = "http://localhost:5000/api";
+const API = "import.meta.env.VITE_API_URL";
 const TABS = ["Overview", "Attendance", "Homework", "Tests", "Fees"];
 
 // ── tiny helpers ─────────────────────────────────────────────────────────────
