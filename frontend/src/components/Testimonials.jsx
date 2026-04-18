@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 
 const STATIC_FALLBACK = [
-  { name: 'Priya Deshmukh', review: "My child's confidence improved a lot after joining this coaching." },
-  { name: 'Rajesh Patil',   review: 'Very supportive teacher and great teaching methods.' },
-  { name: 'Sneha Kulkarni', review: 'Excellent teaching approach for primary students.' },
-  { name: 'Anita Sharma',   review: 'Best coaching for building strong basics.' },
+  { name: 'Ashutosh Singh',   review: "Very satisfied with my child's progress at this institute." },
+  { name: 'Satish Tiwari',    review: 'The teachers are very supportive and the teaching methods are excellent.' },
+  { name: 'Shashikant Rawat', review: "My child's confidence has improved a lot after joining this coaching." },
+  { name: 'Ramesh Nishad',    review: 'Best coaching for building strong academic basics.' },
 ];
 
 const Stars = () => (
