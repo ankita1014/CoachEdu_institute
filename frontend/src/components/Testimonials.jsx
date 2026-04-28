@@ -7,10 +7,10 @@ const STATIC_FALLBACK = [
   { name: 'Ramesh Nishad',    review: 'Best coaching for building strong academic basics.' },
 ];
 
-const Stars = () => (
+const Stars = ({ count = 5 }) => (
   <div className="review-stars">
     {Array.from({ length: 5 }).map((_, i) => (
-      <i key={i} className="fas fa-star"></i>
+      <i key={i} className="fas fa-star" style={{ color: i < count ? "#f59e0b" : "#e2e8f0" }}></i>
     ))}
   </div>
 );
@@ -46,7 +46,7 @@ const Testimonials = () => {
               ))
             : reviews.map((item, i) => (
                 <div key={i} className="testimonial-card">
-                  <Stars />
+                  <Stars count={item.rating || 5} />
                   <p className="testimonial-text">"{item.review}"</p>
                   <div className="testimonial-author">
                     <div className="testimonial-avatar">

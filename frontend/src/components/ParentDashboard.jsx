@@ -12,6 +12,44 @@ const ParentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // ── Review state ──────────────────────────────────────────────────────────
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewSuccess, setReviewSuccess] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    setReviewError("");
+    if (!reviewRating) { setReviewError("Please select a rating."); return; }
+    if (!reviewComment.trim()) { setReviewError("Please write a comment."); return; }
+
+    setReviewSubmitting(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/parent/reviews`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          parentId: user.parentId || user.parentid,
+          studentId: dashboard?.student?.studentId || "",
+          name: user.name || "Parent",
+          rating: reviewRating,
+          comment: reviewComment.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || "Failed to submit");
+      setReviewSuccess(true);
+      setReviewRating(0);
+      setReviewComment("");
+    } catch (err) {
+      setReviewError(err.message || "Failed to submit review.");
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
+
   useEffect(() => {
     if (!user?.parentId && !user?.parentid) {
       setLoading(false);
@@ -378,6 +416,73 @@ const ParentDashboard = () => {
                     </article>
                   )) : <div className="parent-empty">No installment timeline available yet.</div>}
                 </div>
+              </section>
+            </section>
+
+            {/* ── Submit Review ── */}
+            <section className="parent-content-grid parent-content-grid-bottom">
+              <section className="parent-panel" style={{ gridColumn: "1 / -1" }}>
+                <div className="parent-panel-header">
+                  <div>
+                    <p className="parent-kicker">Share Your Experience</p>
+                    <h3>Submit a Review</h3>
+                  </div>
+                </div>
+                {reviewSuccess ? (
+                  <div style={{ padding: "24px", textAlign: "center" }}>
+                    <div style={{ fontSize: "2rem", marginBottom: 8 }}>🎉</div>
+                    <p style={{ fontWeight: 700, color: "#16a34a", marginBottom: 4 }}>Thank you for your review!</p>
+                    <p style={{ color: "#64748b", fontSize: "0.88rem" }}>Your feedback helps us improve.</p>
+                    <button
+                      style={{ marginTop: 16, padding: "8px 20px", borderRadius: 8, border: "1.5px solid #e2e8f0", background: "#f8fafc", cursor: "pointer" }}
+                      onClick={() => setReviewSuccess(false)}
+                    >
+                      Submit another
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleReviewSubmit} style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
+                    {/* Star rating */}
+                    <div>
+                      <label style={{ fontSize: "0.82rem", color: "#64748b", display: "block", marginBottom: 6 }}>Rating *</label>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setReviewRating(star)}
+                            style={{
+                              background: "none", border: "none", cursor: "pointer",
+                              fontSize: "1.6rem", color: star <= reviewRating ? "#f59e0b" : "#cbd5e1",
+                              padding: 0, lineHeight: 1,
+                            }}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Comment */}
+                    <div>
+                      <label style={{ fontSize: "0.82rem", color: "#64748b", display: "block", marginBottom: 6 }}>Comment *</label>
+                      <textarea
+                        rows={3}
+                        placeholder="Share your experience about your child's progress..."
+                        value={reviewComment}
+                        onChange={(e) => setReviewComment(e.target.value)}
+                        style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1.5px solid #e2e8f0", fontSize: "0.9rem", resize: "vertical", fontFamily: "inherit" }}
+                      />
+                    </div>
+                    {reviewError && <p style={{ color: "#ef4444", fontSize: "0.82rem", margin: 0 }}>{reviewError}</p>}
+                    <button
+                      type="submit"
+                      disabled={reviewSubmitting}
+                      style={{ alignSelf: "flex-start", padding: "10px 24px", borderRadius: 10, border: "none", background: "linear-gradient(135deg,#4f6df5,#7c3aed)", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: "0.9rem" }}
+                    >
+                      {reviewSubmitting ? "Submitting…" : "Submit Review"}
+                    </button>
+                  </form>
+                )}
               </section>
             </section>
           </>

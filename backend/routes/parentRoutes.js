@@ -8,6 +8,7 @@ import Material from "../models/Material.js";
 import Notification from "../models/Notification.js";
 import Student from "../models/Student.js";
 import Test from "../models/Test.js";
+import Review from "../models/Review.js";
 
 const router = express.Router();
 
@@ -198,37 +199,67 @@ router.get("/dashboard/:parentId", async (req, res) => {
 // ================= PUBLIC REVIEWS =================
 router.get("/reviews", async (req, res) => {
   try {
-    const parents = await Parent.find({}, "name review").lean();
-
-    const fallbackReviews = [
-      "Very satisfied with my child's progress at this institute.",
-      "The teachers are very supportive and the teaching methods are excellent.",
-      "My child's confidence has improved a lot after joining this coaching.",
-      "Best coaching for building strong academic basics.",
-    ];
-
-    // Use real parent names, assign fallback reviews if no review field
-    const reviews = parents
-      .filter((p) => p.name && p.name.trim() && p.name !== "Parent")
-      .slice(0, 4)
-      .map((p, i) => ({
-        name: p.name.trim(),
-        review: (p.review && p.review.trim()) || fallbackReviews[i % fallbackReviews.length],
-      }));
+    const reviews = await Review.find().sort({ createdAt: -1 }).limit(4).lean();
 
     if (reviews.length === 0) {
-      return res.json({
-        success: true,
-        reviews: fallbackReviews.map((review, i) => ({
-          name: ["Priya Deshmukh", "Rajesh Patil", "Sneha Kulkarni", "Anita Sharma"][i],
-          review,
-        })),
-      });
+      // fallback to real parent names if no reviews submitted yet
+      const parents = await Parent.find({}, "name").lean();
+      const fallbackReviews = [
+        "Very satisfied with my child's progress at this institute.",
+        "The teachers are very supportive and the teaching methods are excellent.",
+        "My child's confidence has improved a lot after joining this coaching.",
+        "Best coaching for building strong academic basics.",
+      ];
+      const fallback = parents
+        .filter((p) => p.name && p.name.trim() && p.name !== "Parent")
+        .slice(0, 4)
+        .map((p, i) => ({
+          name: p.name.trim(),
+          review: fallbackReviews[i % fallbackReviews.length],
+          rating: 5,
+        }));
+      return res.json({ success: true, reviews: fallback.length ? fallback : [] });
     }
 
-    res.json({ success: true, reviews });
+    res.json({
+      success: true,
+      reviews: reviews.map((r) => ({
+        name: r.name,
+        review: r.comment,
+        rating: r.rating,
+      })),
+    });
   } catch (err) {
     console.error("REVIEWS_ERROR:", err.message);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// ================= SUBMIT REVIEW =================
+router.post("/reviews", async (req, res) => {
+  try {
+    const { parentId, studentId, name, rating, comment } = req.body;
+
+    if (!parentId || !studentId) {
+      return res.status(400).json({ success: false, message: "parentId and studentId are required" });
+    }
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ success: false, message: "Rating must be between 1 and 5" });
+    }
+    if (!comment || !comment.trim()) {
+      return res.status(400).json({ success: false, message: "Comment is required" });
+    }
+
+    const review = await Review.create({
+      parentId, studentId,
+      name: name || "Parent",
+      rating: Number(rating),
+      comment: comment.trim(),
+    });
+
+    res.status(201).json({ success: true, review });
+  } catch (err) {
+    console.error("REVIEW_SUBMIT_ERROR:", err.message);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
