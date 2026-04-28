@@ -290,43 +290,39 @@ const TeacherDashboard = () => {
   }, [filteredAttendance]);
 
   const performanceData = useMemo(() => {
-    const grouped = dashboardData.tests.reduce((accumulator, test) => {
+    const SUBJECTS = ["Marathi", "Maths", "English", "Mathematics", "Hindi"];
+    const grouped = {};
+
+    for (const test of dashboardData.tests) {
       const subject = test.subject || "General";
       const submissions = Array.isArray(test.submissions) ? test.submissions : [];
-      const evaluatedScores = submissions
-        .map((submission) => submission.score || 0)
-        .filter((score) => Number.isFinite(score));
 
-      if (!accumulator[subject]) {
-        accumulator[subject] = {
-          name: subject,
-          totalScore: 0,
-          count: 0,
-        };
+      // Only count actually evaluated submissions
+      const evaluatedSubmissions = submissions.filter(
+        (s) => s.status === "evaluated" && typeof s.score === "number"
+      );
+
+      if (!evaluatedSubmissions.length) continue;
+
+      if (!grouped[subject]) {
+        grouped[subject] = { totalScore: 0, count: 0, totalMarks: 0 };
       }
 
-      if (evaluatedScores.length) {
-        accumulator[subject].totalScore += evaluatedScores.reduce(
-          (sum, score) => sum + score,
-          0
-        );
-        accumulator[subject].count += evaluatedScores.length;
-      } else {
-        accumulator[subject].totalScore += Number(test.totalMarks) || 0;
-        accumulator[subject].count += 1;
+      for (const s of evaluatedSubmissions) {
+        grouped[subject].totalScore += s.score;
+        grouped[subject].count += 1;
+        grouped[subject].totalMarks += Number(test.totalMarks) || 20;
       }
+    }
 
-      return accumulator;
-    }, {});
-
-    const data = Object.values(grouped)
-      .slice(0, 6)
-      .map((item) => ({
-        name: item.name,
-        score: item.count ? Math.round(item.totalScore / item.count) : 0,
-      }));
-
-    return data;
+    return Object.entries(grouped).map(([subject, data]) => ({
+      name: subject,
+      // average as percentage of total marks
+      average: data.totalMarks > 0
+        ? Math.round((data.totalScore / data.totalMarks) * 100)
+        : 0,
+      avgRaw: Math.round(data.totalScore / data.count),
+    }));
   }, [dashboardData.tests]);
 
   const dashboardStats = useMemo(
@@ -597,24 +593,19 @@ const TeacherDashboard = () => {
               <div className="td-skeleton td-chart-skeleton"></div>
             ) : performanceData.length > 0 ? (
               <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={performanceData}>
+                <BarChart data={performanceData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.18)" />
-                  <XAxis dataKey="name" tickLine={false} axisLine={false} />
-                  <YAxis tickLine={false} axisLine={false} />
-                  <Tooltip />
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
+                  <YAxis tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(value, name) => [`${value}%`, "Avg Score"]} />
                   <Bar
-                    dataKey="score"
+                    dataKey="average"
                     radius={[10, 10, 0, 0]}
                     fill="url(#teacherPerformanceGradient)"
+                    maxBarSize={60}
                   />
                   <defs>
-                    <linearGradient
-                      id="teacherPerformanceGradient"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
+                    <linearGradient id="teacherPerformanceGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#2dd4bf" />
                       <stop offset="100%" stopColor="#5b5ce2" />
                     </linearGradient>
@@ -625,7 +616,7 @@ const TeacherDashboard = () => {
               <div className="td-empty-chart">
                 <span className="td-empty-chart-icon">📈</span>
                 <p>No performance data yet.</p>
-                <span>Create tests and evaluate students to see insights.</span>
+                <span>Conduct tests and evaluate students to generate insights.</span>
               </div>
             )}
           </div>
