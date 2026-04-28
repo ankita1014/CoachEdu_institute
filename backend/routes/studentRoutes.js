@@ -602,6 +602,54 @@ router.post("/test-attempt/submit", async (req, res) => {
   }
 });
 
+// GET /api/student/test-performance/:studentId
+router.get("/test-performance/:studentId", async (req, res) => {
+  try {
+    const student = await getStudentByIdentifier(req.params.studentId);
+    if (!student) return res.status(404).json({ success: false, message: "Student not found" });
+
+    const classQuery = buildClassQuery(student.class);
+    const tests = await fetchWithFallback(Test, classQuery, student.class, { createdAt: -1 });
+
+    const evaluated = tests
+      .map((t) => {
+        const sub = t.submissions.find((s) => s.studentId === student.studentId);
+        return sub && sub.status === "evaluated"
+          ? { score: sub.score || 0, totalMarks: t.totalMarks || 0 }
+          : null;
+      })
+      .filter(Boolean);
+
+    if (!evaluated.length) {
+      return res.json({
+        success: true,
+        data: { totalTests: 0, averageScore: 0, averageMaxMarks: 0, percentage: 0 },
+      });
+    }
+
+    const totalScore    = evaluated.reduce((sum, e) => sum + e.score, 0);
+    const totalMaxMarks = evaluated.reduce((sum, e) => sum + e.totalMarks, 0);
+    const averageScore    = Math.round(totalScore / evaluated.length);
+    const averageMaxMarks = Math.round(totalMaxMarks / evaluated.length);
+    const percentage      = averageMaxMarks > 0
+      ? Math.round((totalScore / totalMaxMarks) * 100)
+      : 0;
+
+    res.json({
+      success: true,
+      data: {
+        totalTests: evaluated.length,
+        averageScore,
+        averageMaxMarks,
+        percentage,
+      },
+    });
+  } catch (err) {
+    console.error("TEST_PERFORMANCE_ERROR:", err.message);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
 router.put("/students/:id", async (req, res) => {
   try {
     const { name, class: studentClass, parentPhone } = req.body;

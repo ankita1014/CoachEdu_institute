@@ -236,6 +236,19 @@
 .parent-stat-card.tone-amber::before { background: linear-gradient(135deg, #f59e0b, #f97316); }
 .parent-stat-card.tone-rose::before { background: linear-gradient(135deg, #fb7185, #ef4444); }
 
+.parent-stat-card .perf-percentage {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #166534;
+  margin: 0 0 4px;
+}
+
+.parent-stat-card .perf-label {
+  font-size: 0.82rem;
+  color: #475569;
+  margin: 0;
+}
+
 .parent-overview-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

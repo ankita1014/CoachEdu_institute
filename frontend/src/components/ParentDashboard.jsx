@@ -8,6 +8,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
 const ParentDashboard = () => {
   const { user, logout } = useAuth();
   const [dashboard, setDashboard] = useState(null);
+  const [performance, setPerformance] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -34,6 +35,18 @@ const ParentDashboard = () => {
 
         if (active) {
           setDashboard(payload.data);
+
+          // Fetch detailed test performance once we know the studentId
+          const sid = payload.data?.student?.studentId;
+          if (sid) {
+            try {
+              const perfRes = await fetch(`${API_BASE_URL}/student/test-performance/${sid}`);
+              const perfPayload = await perfRes.json();
+              if (perfPayload.success) setPerformance(perfPayload.data);
+            } catch {
+              // non-fatal — fall back to summary percentage
+            }
+          }
         }
       } catch (err) {
         if (active) {
@@ -162,8 +175,30 @@ const ParentDashboard = () => {
               </article>
               <article className="parent-stat-card tone-green">
                 <span>Test Performance</span>
-                <strong>{summary.performancePercentage || 0}%</strong>
-                <p>Average of evaluated tests so far.</p>
+                {performance && performance.totalTests > 0 ? (
+                  <>
+                    <strong>{performance.averageScore} / {performance.averageMaxMarks}</strong>
+                    <p className="perf-percentage">{performance.percentage}%</p>
+                    <p className="perf-label">
+                      {performance.percentage >= 70
+                        ? "Good"
+                        : performance.percentage >= 40
+                        ? "Average"
+                        : "Needs Improvement"}
+                      {" · "}{performance.totalTests} test{performance.totalTests !== 1 ? "s" : ""} attempted
+                    </p>
+                  </>
+                ) : performance && performance.totalTests === 0 ? (
+                  <>
+                    <strong style={{ fontSize: "1.1rem" }}>—</strong>
+                    <p>No tests attempted yet</p>
+                  </>
+                ) : (
+                  <>
+                    <strong>{summary.performancePercentage || 0}%</strong>
+                    <p>Average of evaluated tests so far.</p>
+                  </>
+                )}
               </article>
               <article className="parent-stat-card tone-amber">
                 <span>Pending Homework</span>
