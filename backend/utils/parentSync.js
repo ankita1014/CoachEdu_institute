@@ -5,6 +5,7 @@
  */
 
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
 const Parent = mongoose.model(
   "sync_parents",
@@ -56,8 +57,10 @@ export const createParentForStudent = async (student) => {
   if (existing) return existing;
 
   const doc = buildParentDoc(student);
+  // Hash the plain-text password before storing
+  doc.password = await bcrypt.hash(doc.password, 10);
   const parent = await Parent.create(doc);
-  console.log(`[parentSync] Created ${parentId} (${doc.password}) for student ${student.studentId}`);
+  console.log(`[parentSync] Created ${parentId} for student ${student.studentId}`);
   return parent;
 };
 
@@ -87,7 +90,7 @@ const cleanExistingParents = async () => {
   }
 };
 
-// ── Update all existing student + parent passwords to FirstName@1234 ──────────
+// ── Update all existing student + parent passwords to bcrypt hashed FirstName@1234 ──
 export const syncPasswordFormat = async () => {
   try {
     const Student = mongoose.model("Student");
@@ -95,9 +98,11 @@ export const syncPasswordFormat = async () => {
     let stuUpdated = 0;
 
     for (const s of students) {
-      const newPwd = makePassword(s.name);
-      if (s.password !== newPwd) {
-        await Student.updateOne({ _id: s._id }, { $set: { password: newPwd } });
+      const plainPwd = makePassword(s.name);
+      const isBcrypt = s.password && (s.password.startsWith('$2a$') || s.password.startsWith('$2b$'));
+      if (!isBcrypt) {
+        const hashed = await bcrypt.hash(plainPwd, 10);
+        await Student.updateOne({ _id: s._id }, { $set: { password: hashed } });
         stuUpdated++;
       }
     }
@@ -106,14 +111,16 @@ export const syncPasswordFormat = async () => {
     let parUpdated = 0;
 
     for (const p of parents) {
-      const newPwd = makePassword(p.name);
-      if (p.password !== newPwd) {
-        await Parent.updateOne({ _id: p._id }, { $set: { password: newPwd } });
+      const plainPwd = makePassword(p.name);
+      const isBcrypt = p.password && (p.password.startsWith('$2a$') || p.password.startsWith('$2b$'));
+      if (!isBcrypt) {
+        const hashed = await bcrypt.hash(plainPwd, 10);
+        await Parent.updateOne({ _id: p._id }, { $set: { password: hashed } });
         parUpdated++;
       }
     }
 
-    console.log(`[passwordSync] Updated ${stuUpdated} student(s) and ${parUpdated} parent(s) to FirstName@1234 format`);
+    console.log(`[passwordSync] Hashed ${stuUpdated} student(s) and ${parUpdated} parent(s) passwords`);
   } catch (err) {
     console.error("[passwordSync] Failed:", err.message);
   }

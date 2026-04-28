@@ -3,6 +3,7 @@ import fs from "fs";
 import mongoose from "mongoose";
 import multer from "multer";
 import path from "path";
+import bcrypt from "bcryptjs";
 import { fileURLToPath } from "url";
 import Fees from "../models/Fees.js";
 import Homework from "../models/Homework.js";
@@ -468,7 +469,7 @@ router.post("/add", async (req, res) => {
     if (existing) {
       return res.status(409).json({ success: false, message: `Student ID "${studentId}" already exists` });
     }
-    const studentPassword = makePassword(name);
+    const studentPassword = await bcrypt.hash(makePassword(name), 10);
     const student = await Student.create({
       name, studentId, class: studentClass,
       parentPhone: parentPhone || "", password: studentPassword, role: "student",

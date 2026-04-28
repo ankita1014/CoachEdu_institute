@@ -1,4 +1,5 @@
 // WARNING: Plain text passwords — demo project only, not for production
+import bcrypt from 'bcryptjs';
 import mongoose from "mongoose";
 
 // Use loose schemas so we can work with existing collections as-is
@@ -211,16 +212,18 @@ export const forgotResetPassword = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    // Store password as plain text (demo only)
+    // Hash new password before saving
+    const hashed = await bcrypt.hash(newPassword, 10);
+
     if (result.userType === "student") {
       await Student.updateOne(
         { $or: [{ studentId: id.trim() }, { studentid: id.trim() }] },
-        { $set: { password: newPassword } }
+        { $set: { password: hashed } }
       );
     } else {
       await Parent.updateOne(
         { $or: [{ parentId: id.trim() }, { parentid: id.trim() }] },
-        { $set: { password: newPassword } }
+        { $set: { password: hashed } }
       );
     }
 
