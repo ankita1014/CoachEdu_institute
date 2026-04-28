@@ -210,13 +210,7 @@
   max-width: 480px;
   border-radius: 20px;
   box-shadow: 0 20px 60px rgba(30, 42, 120, 0.14);
-  animation: hp-float 4s ease-in-out infinite;
   display: block;
-}
-
-@keyframes hp-float {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-10px); }
 }
 
 /* ════════════════════════════════

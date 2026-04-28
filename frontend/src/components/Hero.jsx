@@ -21,7 +21,7 @@ const Hero = () => {
   return (
     <section className="hp-hero-wrap">
       <div className="hp-hero-body">
-        <div className="hp-hero-text fade-in-up">
+        <div className="hp-hero-text">
           <span className="hp-badge">Admissions Open 2026-27</span>
 
           <h1 className="hp-hero-h1">
@@ -54,7 +54,7 @@ const Hero = () => {
           </div>
         </div>
 
-        <div className="hp-hero-img fade-in-up" style={{ animationDelay: '0.15s' }}>
+        <div className="hp-hero-img">
           <div className="hp-img-blob" aria-hidden="true" />
           <img src={heroIllustration} alt="Education illustration" className="hp-illustration" />
         </div>
