@@ -50,10 +50,3 @@
 .login-card button:hover {
   transform: translateY(-2px);
 }
-
-.forgot-link {
-  margin-top: 10px;
-  cursor: pointer;
-  color: #4f46e5;
-  font-size: 14px;
-}

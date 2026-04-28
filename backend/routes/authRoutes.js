@@ -3,13 +3,6 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import mongoose from 'mongoose';
-import {
-  forgotFindUser,
-  forgotVerifyPhone,
-  forgotSendOtp,
-  forgotVerifyOtp,
-  forgotResetPassword,
-} from '../controllers/forgotPasswordController.js';
 
 const router = express.Router();
 
@@ -154,17 +147,5 @@ router.get('/me', async (req, res) => {
     });
   }
 });
-
-// ================= FORGOT PASSWORD =================
-// Step 1: Find user by studentId or parentId
-router.post('/forgot-password', forgotFindUser);
-// Step 2: Verify registered phone number
-router.post('/verify-phone', forgotVerifyPhone);
-// Step 3: Send OTP
-router.post('/send-otp', forgotSendOtp);
-// Step 4: Verify OTP
-router.post('/verify-otp', forgotVerifyOtp);
-// Step 5: Reset password
-router.post('/reset-password', forgotResetPassword);
 
 export default router;

@@ -30,7 +30,6 @@ import TeacherDashboard from "./components/TeacherDashboard";
 import ParentDashboard from "./components/ParentDashboard";
 import TeacherSubjects from "./components/TeacherSubjects";
 import TeacherSubjectDetail from "./pages/TeacherSubjectDetail";
-import ForgotPassword from "./pages/ForgotPassword";
 import InquiryPage from "./pages/InquiryPage";
 import TestAttempt from "./pages/TestAttempt";
 import "@fortawesome/fontawesome-free/css/all.min.css";
@@ -115,7 +114,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/inquiry" element={<InquiryPage />} />
           <Route
             path="/test/:testId/attempt"

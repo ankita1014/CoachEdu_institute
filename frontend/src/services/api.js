@@ -39,31 +39,6 @@ export const authAPI = {
     const res = await api.post('/auth/login', data);
     return res.data;
   },
-
-  forgotFindUser: async (id) => {
-    const res = await api.post('/auth/forgot-password', { id });
-    return res.data;
-  },
-
-  forgotVerifyPhone: async (id, phone) => {
-    const res = await api.post('/auth/verify-phone', { id, phone });
-    return res.data;
-  },
-
-  sendOtp: async (id) => {
-    const res = await api.post('/auth/send-otp', { id });
-    return res.data;
-  },
-
-  verifyOtp: async (id, otp) => {
-    const res = await api.post('/auth/verify-otp', { id, otp });
-    return res.data;
-  },
-
-  resetPassword: async (id, newPassword) => {
-    const res = await api.post('/auth/reset-password', { id, newPassword });
-    return res.data;
-  },
 };
 
 export const leaderboardAPI = {

@@ -115,9 +115,7 @@ const Login = () => {
               : "Login"}
           </button>
 
-          <p className="forgot-link" onClick={() => navigate("/forgot-password")}>
-            Forgot Password?
-          </p>
+
         </form>
       </div>
     </div>
