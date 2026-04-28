@@ -289,41 +289,19 @@ const TeacherDashboard = () => {
     return data;
   }, [filteredAttendance]);
 
-  const performanceData = useMemo(() => {
-    const SUBJECTS = ["Marathi", "Maths", "English", "Mathematics", "Hindi"];
-    const grouped = {};
+  const [performanceData, setPerformanceData] = useState([]);
 
-    for (const test of dashboardData.tests) {
-      const subject = test.subject || "General";
-      const submissions = Array.isArray(test.submissions) ? test.submissions : [];
-
-      // Only count actually evaluated submissions
-      const evaluatedSubmissions = submissions.filter(
-        (s) => s.status === "evaluated" && typeof s.score === "number"
-      );
-
-      if (!evaluatedSubmissions.length) continue;
-
-      if (!grouped[subject]) {
-        grouped[subject] = { totalScore: 0, count: 0, totalMarks: 0 };
-      }
-
-      for (const s of evaluatedSubmissions) {
-        grouped[subject].totalScore += s.score;
-        grouped[subject].count += 1;
-        grouped[subject].totalMarks += Number(test.totalMarks) || 20;
-      }
-    }
-
-    return Object.entries(grouped).map(([subject, data]) => ({
-      name: subject,
-      // average as percentage of total marks
-      average: data.totalMarks > 0
-        ? Math.round((data.totalScore / data.totalMarks) * 100)
-        : 0,
-      avgRaw: Math.round(data.totalScore / data.count),
-    }));
-  }, [dashboardData.tests]);
+  useEffect(() => {
+    if (!user?.role || user.role !== "teacher") return;
+    const teacherId = user.teacherId || user.id || user._id || "";
+    fetch(`${API_BASE_URL}/teacher/tests/subject-performance?teacherId=${encodeURIComponent(teacherId)}`)
+      .then(r => r.json())
+      .then(d => {
+        console.log("[performance]", d.data);
+        setPerformanceData(d.data || []);
+      })
+      .catch(() => setPerformanceData([]));
+  }, [user]);
 
   const dashboardStats = useMemo(
     () => ({
@@ -595,11 +573,19 @@ const TeacherDashboard = () => {
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={performanceData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.18)" />
-                  <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
-                  <YAxis tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(value, name) => [`${value}%`, "Avg Score"]} />
+                  <XAxis dataKey="subject" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
+                  <YAxis
+                    tickLine={false} axisLine={false}
+                    domain={[0, (dataMax) => Math.max(dataMax + 2, performanceData[0]?.maxMarks || 20)]}
+                    tick={{ fontSize: 11 }}
+                  />
+                  <Tooltip
+                    formatter={(value, _name, props) =>
+                      [`${value} / ${props.payload.maxMarks}`, props.payload.subject]
+                    }
+                  />
                   <Bar
-                    dataKey="average"
+                    dataKey="averageMarks"
                     radius={[10, 10, 0, 0]}
                     fill="url(#teacherPerformanceGradient)"
                     maxBarSize={60}
@@ -615,7 +601,7 @@ const TeacherDashboard = () => {
             ) : (
               <div className="td-empty-chart">
                 <span className="td-empty-chart-icon">📈</span>
-                <p>No performance data yet.</p>
+                <p>No test performance data available.</p>
                 <span>Conduct tests and evaluate students to generate insights.</span>
               </div>
             )}

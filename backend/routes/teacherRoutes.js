@@ -9,6 +9,46 @@ import { memUpload, uploadToCloudinary, deleteFromCloudinary } from "../utils/cl
 
 const router = express.Router();
 
+// ── GET /api/teacher/tests/subject-performance ────────────────────────────────
+// Returns subject-wise average marks from evaluated test submissions
+router.get("/tests/subject-performance", async (req, res) => {
+  try {
+    const { teacherId } = req.query;
+    const query = teacherId ? { teacherId } : {};
+    const tests = await Test.find(query).lean();
+
+    const grouped = {};
+
+    for (const test of tests) {
+      const subject = test.subject || "General";
+      const totalMarks = Number(test.totalMarks) || 20;
+      const evaluated = (test.submissions || []).filter(
+        (s) => s.status === "evaluated" && typeof s.score === "number"
+      );
+      if (!evaluated.length) continue;
+
+      if (!grouped[subject]) grouped[subject] = { totalScore: 0, count: 0, maxMarks: totalMarks };
+      for (const s of evaluated) {
+        grouped[subject].totalScore += s.score;
+        grouped[subject].count += 1;
+      }
+      // keep maxMarks as the latest test's totalMarks for that subject
+      grouped[subject].maxMarks = totalMarks;
+    }
+
+    const data = Object.entries(grouped).map(([subject, d]) => ({
+      subject,
+      averageMarks: Math.round((d.totalScore / d.count) * 10) / 10, // 1 decimal
+      maxMarks: d.maxMarks,
+    }));
+
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("SUBJECT_PERFORMANCE_ERROR:", err.message);
+    res.status(500).json({ success: false, data: [] });
+  }
+});
+
 const normalizeClassVariants = (value) => {
   if (!value) return [];
 
