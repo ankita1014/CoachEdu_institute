@@ -1,62 +1,13 @@
 import express from "express";
-import fs from "fs";
 import mongoose from "mongoose";
-import multer from "multer";
-import path from "path";
-import { fileURLToPath } from "url";
 import Material from "../models/Material.js";
 import Homework from "../models/Homework.js";
 import Notification from "../models/Notification.js";
 import Student from "../models/Student.js";
 import Test from "../models/Test.js";
+import { memUpload, uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinaryUpload.js";
 
 const router = express.Router();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const uploadDir = path.join(__dirname, "..", "uploads", "materials");
-const homeworkUploadDir = path.join(__dirname, "..", "uploads", "homework");
-
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-if (!fs.existsSync(homeworkUploadDir)) {
-  fs.mkdirSync(homeworkUploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (_req, file, cb) => {
-    const safeName = file.originalname.replace(/\s+/g, "-");
-    cb(null, `${Date.now()}-${safeName}`);
-  },
-});
-
-const upload = multer({
-  storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024,
-  },
-});
-
-const homeworkStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, homeworkUploadDir);
-  },
-  filename: (_req, file, cb) => {
-    const safeName = file.originalname.replace(/\s+/g, "-");
-    cb(null, `${Date.now()}-${safeName}`);
-  },
-});
-
-const homeworkUpload = multer({
-  storage: homeworkStorage,
-  limits: {
-    fileSize: 10 * 1024 * 1024,
-  },
-});
 
 const normalizeClassVariants = (value) => {
   if (!value) return [];
@@ -302,10 +253,9 @@ router.get("/attendance", async (req, res) => {
     });
   }
 });
-router.post("/materials", upload.single("file"), async (req, res) => {
+router.post("/materials", memUpload.single("file"), async (req, res) => {
   try {
-    const { title, subject, className, description, teacherId, teacherName } =
-      req.body;
+    const { title, subject, className, description, teacherId, teacherName } = req.body;
 
     if (!title || !subject || !className || !teacherId || !req.file) {
       return res.status(400).json({
@@ -314,63 +264,41 @@ router.post("/materials", upload.single("file"), async (req, res) => {
       });
     }
 
-    const fileUrl = `${req.protocol}://${req.get(
-      "host"
-    )}/uploads/materials/${req.file.filename}`;
+    const result = await uploadToCloudinary(req.file.buffer, "materials", req.file.originalname);
 
     const material = await Material.create({
-      title,
-      subject,
-      className,
-      description,
-      fileUrl,
+      title, subject, className,
+      description: description || "",
+      fileUrl: result.secure_url,
       fileName: req.file.originalname,
       mimeType: req.file.mimetype,
       fileSize: req.file.size,
-      teacherId,
-      teacherName,
-      storageProvider: "local",
+      teacherId, teacherName,
+      storageProvider: "cloudinary",
     });
 
-    // auto-notify students of this class
     createClassNotification({
       type: "general",
       title: `New Material: ${title}`,
       message: `${subject} study material uploaded by ${teacherName || "your teacher"}.`,
-      className,
-      teacherId,
-      teacherName,
+      className, teacherId, teacherName,
     });
 
     res.status(201).json({ success: true, material });
   } catch (err) {
     console.error("MATERIAL_UPLOAD_ERROR:", err.message);
-    res.status(500).json({
-      success: false,
-      message: "Failed to upload material",
-    });
+    res.status(500).json({ success: false, message: "Failed to upload material" });
   }
 });
 
-router.put("/materials/:id", upload.single("file"), async (req, res) => {
+router.put("/materials/:id", memUpload.single("file"), async (req, res) => {
   try {
     const material = await Material.findById(req.params.id);
+    if (!material) return res.status(404).json({ success: false, message: "Material not found" });
 
-    if (!material) {
-      return res.status(404).json({
-        success: false,
-        message: "Material not found",
-      });
-    }
-
-    const { title, subject, className, description, teacherId, teacherName } =
-      req.body;
-
+    const { title, subject, className, description, teacherId, teacherName } = req.body;
     if (!title || !subject || !className || !teacherId) {
-      return res.status(400).json({
-        success: false,
-        message: "Title, subject, class, and teacher are required",
-      });
+      return res.status(400).json({ success: false, message: "Title, subject, class, and teacher are required" });
     }
 
     material.title = title;
@@ -381,29 +309,20 @@ router.put("/materials/:id", upload.single("file"), async (req, res) => {
     material.teacherName = teacherName || material.teacherName;
 
     if (req.file) {
-      const oldPath = path.join(uploadDir, path.basename(material.fileUrl));
-
-      if (fs.existsSync(oldPath)) {
-        fs.unlinkSync(oldPath);
-      }
-
-      material.fileUrl = `${req.protocol}://${req.get(
-        "host"
-      )}/uploads/materials/${req.file.filename}`;
+      await deleteFromCloudinary(material.fileUrl);
+      const result = await uploadToCloudinary(req.file.buffer, "materials", req.file.originalname);
+      material.fileUrl = result.secure_url;
       material.fileName = req.file.originalname;
       material.mimeType = req.file.mimetype;
       material.fileSize = req.file.size;
+      material.storageProvider = "cloudinary";
     }
 
     await material.save();
-
     res.json({ success: true, material });
   } catch (err) {
     console.error("MATERIAL_UPDATE_ERROR:", err.message);
-    res.status(500).json({
-      success: false,
-      message: "Failed to update material",
-    });
+    res.status(500).json({ success: false, message: "Failed to update material" });
   }
 });
 
@@ -439,86 +358,50 @@ router.get("/materials", async (req, res) => {
 router.delete("/materials/:id", async (req, res) => {
   try {
     const material = await Material.findById(req.params.id);
+    if (!material) return res.status(404).json({ success: false, message: "Material not found" });
 
-    if (!material) {
-      return res.status(404).json({
-        success: false,
-        message: "Material not found",
-      });
-    }
-
-    const localPath = path.join(uploadDir, path.basename(material.fileUrl));
-
-    if (fs.existsSync(localPath)) {
-      fs.unlinkSync(localPath);
-    }
-
+    await deleteFromCloudinary(material.fileUrl);
     await Material.findByIdAndDelete(req.params.id);
-
     res.json({ success: true, message: "Material deleted" });
   } catch (err) {
     console.error("MATERIAL_DELETE_ERROR:", err.message);
-    res.status(500).json({
-      success: false,
-      message: "Failed to delete material",
-    });
+    res.status(500).json({ success: false, message: "Failed to delete material" });
   }
 });
 
-router.post("/homework", homeworkUpload.single("file"), async (req, res) => {
+router.post("/homework", memUpload.single("file"), async (req, res) => {
   try {
-    const {
-      title,
-      subject,
-      className,
-      description,
-      dueDate,
-      teacherId,
-      teacherName,
-    } = req.body;
+    const { title, subject, className, description, dueDate, teacherId, teacherName } = req.body;
 
     if (!title || !subject || !className || !description || !dueDate || !teacherId) {
-      return res.status(400).json({
-        success: false,
-        message: "Title, subject, class, description, due date and teacher are required",
-      });
+      return res.status(400).json({ success: false, message: "Title, subject, class, description, due date and teacher are required" });
     }
 
     const students = await getStudentsForClass(className);
     const submissions = students.map((student) => ({
-      studentId: student.studentId,
-      studentName: student.name,
-      status: "pending",
-      marks: 0,
-      feedback: "",
-      submittedAt: null,
-      fileUrl: "",
+      studentId: student.studentId, studentName: student.name,
+      status: "pending", marks: 0, feedback: "", submittedAt: null, fileUrl: "",
     }));
 
+    let attachmentUrl = "";
+    let attachmentName = "";
+    if (req.file) {
+      const result = await uploadToCloudinary(req.file.buffer, "homework", req.file.originalname);
+      attachmentUrl = result.secure_url;
+      attachmentName = req.file.originalname;
+    }
+
     const homework = await Homework.create({
-      title,
-      subject,
-      className,
-      description,
-      dueDate,
-      teacherId,
-      teacherName,
-      attachmentUrl: req.file
-        ? `${req.protocol}://${req.get("host")}/uploads/homework/${req.file.filename}`
-        : "",
-      attachmentName: req.file?.originalname || "",
-      status: "pending",
-      submissions,
+      title, subject, className, description, dueDate,
+      teacherId, teacherName, attachmentUrl, attachmentName,
+      status: "pending", submissions,
     });
 
-    // auto-notify students of this class
     createClassNotification({
       type: "homework",
       title: `New Homework: ${title}`,
       message: `${subject} homework assigned. Due: ${dueDate}`,
-      className,
-      teacherId,
-      teacherName,
+      className, teacherId, teacherName,
     });
 
     res.status(201).json({ success: true, homework });
@@ -546,24 +429,12 @@ router.get("/homework", async (req, res) => {
   }
 });
 
-router.put("/homework/:id", homeworkUpload.single("file"), async (req, res) => {
+router.put("/homework/:id", memUpload.single("file"), async (req, res) => {
   try {
     const homework = await Homework.findById(req.params.id);
+    if (!homework) return res.status(404).json({ success: false, message: "Homework not found" });
 
-    if (!homework) {
-      return res.status(404).json({ success: false, message: "Homework not found" });
-    }
-
-    const {
-      title,
-      subject,
-      className,
-      description,
-      dueDate,
-      teacherId,
-      teacherName,
-      status,
-    } = req.body;
+    const { title, subject, className, description, dueDate, teacherId, teacherName, status } = req.body;
 
     homework.title = title;
     homework.subject = subject;
@@ -575,16 +446,9 @@ router.put("/homework/:id", homeworkUpload.single("file"), async (req, res) => {
     homework.status = status || homework.status;
 
     if (req.file) {
-      if (homework.attachmentUrl) {
-        const oldPath = path.join(homeworkUploadDir, path.basename(homework.attachmentUrl));
-        if (fs.existsSync(oldPath)) {
-          fs.unlinkSync(oldPath);
-        }
-      }
-
-      homework.attachmentUrl = `${req.protocol}://${req.get(
-        "host"
-      )}/uploads/homework/${req.file.filename}`;
+      await deleteFromCloudinary(homework.attachmentUrl);
+      const result = await uploadToCloudinary(req.file.buffer, "homework", req.file.originalname);
+      homework.attachmentUrl = result.secure_url;
       homework.attachmentName = req.file.originalname;
     }
 
@@ -599,18 +463,9 @@ router.put("/homework/:id", homeworkUpload.single("file"), async (req, res) => {
 router.delete("/homework/:id", async (req, res) => {
   try {
     const homework = await Homework.findById(req.params.id);
+    if (!homework) return res.status(404).json({ success: false, message: "Homework not found" });
 
-    if (!homework) {
-      return res.status(404).json({ success: false, message: "Homework not found" });
-    }
-
-    if (homework.attachmentUrl) {
-      const filePath = path.join(homeworkUploadDir, path.basename(homework.attachmentUrl));
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-    }
-
+    await deleteFromCloudinary(homework.attachmentUrl);
     await Homework.findByIdAndDelete(req.params.id);
     res.json({ success: true, message: "Homework deleted" });
   } catch (err) {

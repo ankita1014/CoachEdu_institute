@@ -1,8 +1,5 @@
 import express from "express";
-import fs from "fs";
 import mongoose from "mongoose";
-import multer from "multer";
-import path from "path";
 import bcrypt from "bcryptjs";
 import { fileURLToPath } from "url";
 import Fees from "../models/Fees.js";
@@ -13,24 +10,9 @@ import Student from "../models/Student.js";
 import Test from "../models/Test.js";
 import { createParentForStudent, deleteParentForStudent } from "../utils/parentSync.js";
 import { makePassword } from "../utils/parentSync.js";
+import { memUpload, uploadToCloudinary, deleteFromCloudinary } from "../utils/cloudinaryUpload.js";
 
 const router = express.Router();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const studentHomeworkDir = path.join(__dirname, "..", "uploads", "student-homework");
-
-if (!fs.existsSync(studentHomeworkDir)) {
-  fs.mkdirSync(studentHomeworkDir, { recursive: true });
-}
-
-const submissionStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => { cb(null, studentHomeworkDir); },
-  filename: (_req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname.replace(/\s+/g, "-")}`);
-  },
-});
-
-const submissionUpload = multer({ storage: submissionStorage, limits: { fileSize: 10 * 1024 * 1024 } });
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -234,7 +216,7 @@ router.get("/homework/:studentId", async (req, res) => {
   }
 });
 
-router.post("/homework/submit", submissionUpload.single("file"), async (req, res) => {
+router.post("/homework/submit", memUpload.single("file"), async (req, res) => {
   try {
     const { homeworkId, studentId } = req.body;
     if (!homeworkId || !studentId) {
@@ -265,13 +247,13 @@ router.post("/homework/submit", submissionUpload.single("file"), async (req, res
     }
 
     if (submission.fileUrl) {
-      const oldFilePath = path.join(studentHomeworkDir, path.basename(submission.fileUrl));
-      if (fs.existsSync(oldFilePath)) fs.unlinkSync(oldFilePath);
+      await deleteFromCloudinary(submission.fileUrl);
     }
 
-    submission.fileUrl = req.file
-      ? `${req.protocol}://${req.get("host")}/uploads/student-homework/${req.file.filename}`
-      : submission.fileUrl;
+    if (req.file) {
+      const result = await uploadToCloudinary(req.file.buffer, "student-homework", req.file.originalname);
+      submission.fileUrl = result.secure_url;
+    }
     submission.status = "submitted";
     submission.submittedAt = new Date();
 
