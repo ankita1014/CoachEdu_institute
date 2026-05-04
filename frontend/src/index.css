@@ -1695,19 +1695,19 @@ footer {
   align-items: center;
   margin-bottom: 15px;
   text-decoration: none;
-  margin-left: 0;
+  margin-left: -60px;
 }
 
 .footer-logo-img {
-  height: 44px;
-  width: auto;
-  margin-right: 8px;
+  height: 75px;
+  margin-right: -10px;
   background: transparent;
   object-fit: contain;
 }
 
 footer .footer-logo-img {
-  filter: brightness(0) invert(1) !important;
+  mix-blend-mode: screen;
+  filter: none !important;
 }
 
 .footer-logo-text {
