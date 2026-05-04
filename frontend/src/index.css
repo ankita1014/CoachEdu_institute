@@ -941,7 +941,7 @@ footer {
 
   .footer-logo-link {
     justify-content: flex-start;
-    margin-left: -50px;
+    margin-left: 0;
   }
 
   .contact-list {
