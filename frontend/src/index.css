@@ -1695,12 +1695,13 @@ footer {
   align-items: center;
   margin-bottom: 15px;
   text-decoration: none;
-  margin-left: -60px;
+  margin-left: 0;
 }
 
 .footer-logo-img {
-  height: 75px;
-  margin-right: -10px;
+  height: 44px;
+  width: auto;
+  margin-right: 8px;
   background: transparent;
   object-fit: contain;
 }
