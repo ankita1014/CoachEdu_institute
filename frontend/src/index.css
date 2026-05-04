@@ -1695,12 +1695,12 @@ footer {
   align-items: center;
   margin-bottom: 15px;
   text-decoration: none;
-  margin-left: -60px;
+  margin-left: 0;
 }
 
 .footer-logo-img {
-  height: 75px;
-  margin-right: -10px;
+  height: 44px;
+  width: auto;
   background: transparent;
   object-fit: contain;
 }
@@ -1714,7 +1714,7 @@ footer .footer-logo-img {
   display: flex;
   flex-direction: column;
   line-height: 1;
-  margin-left: -15px;
+  margin-left: 0;
 }
 
 .footer-brand-main {
