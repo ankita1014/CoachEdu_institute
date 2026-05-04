@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import logo from '../assets/Updated_logo.png';
+//import logo from '../assets/Updated_logo.png';
 
 const Footer = () => {
   return (
@@ -8,7 +8,6 @@ const Footer = () => {
 
         <div className="footer-col">
           <Link to="/" className="footer-logo-link">
-            <img src={logo} alt="Logo" className="footer-logo-img" />
             <div className="footer-logo-text">
               <div>
                 <span className="footer-brand-main">CoachEdu</span>
