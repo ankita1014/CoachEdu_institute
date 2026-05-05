@@ -33,6 +33,46 @@ router.get("/:name", async (req, res) => {
   }
 });
 
+// ── ADD TOPIC (alias for skill — same data structure) ────────────────────────
+router.post("/:name/topics", async (req, res) => {
+  try {
+    const { name, description } = req.body;
+    const trimmed = (name || "").trim();
+
+    if (!trimmed) {
+      return res.status(400).json({ error: "Topic name is required" });
+    }
+
+    const key = req.params.name.toLowerCase();
+    let subject = await Subject.findOne({ name: key });
+
+    if (!subject) {
+      subject = new Subject({ name: key, skills: [] });
+    }
+
+    // Duplicate check (case-insensitive)
+    const exists = subject.skills.some(
+      (s) => s.name.toLowerCase() === trimmed.toLowerCase()
+    );
+    if (exists) {
+      return res.status(409).json({ error: `Topic "${trimmed}" already exists` });
+    }
+
+    subject.skills.push({
+      name: trimmed,
+      description: description || "",
+      chapters: [],
+      status: "pending",
+      progress: 0,
+    });
+    await subject.save();
+
+    res.json(subject);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── ADD SKILL (with duplicate check) ─────────────────────────────────────────
 router.post("/:name/skill", async (req, res) => {
   try {
