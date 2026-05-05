@@ -363,11 +363,11 @@ const FeesModule = () => {
             <label>Students</label>
           </div>
           <div className="fm-stat">
-            <span>{fees.filter(f => f.status === "paid").length}</span>
+            <span>{students.filter(s => getFee(s.studentId)?.remaining === 0 && getFee(s.studentId)?.paid > 0).length}</span>
             <label>Paid</label>
           </div>
           <div className="fm-stat fm-stat-warn">
-            <span>{fees.filter(f => f.status !== "paid").length}</span>
+            <span>{students.filter(s => (getFee(s.studentId)?.remaining ?? 1) > 0).length}</span>
             <label>Pending</label>
           </div>
         </div>

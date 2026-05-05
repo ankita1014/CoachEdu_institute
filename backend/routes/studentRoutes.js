@@ -16,6 +16,14 @@ const router = express.Router();
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
+// Returns a random ISO date string between two dates (inclusive)
+const randomDateInRange = (start, end) => {
+  const s = new Date(start).getTime();
+  const e = new Date(end).getTime();
+  const t = s + Math.random() * (e - s);
+  return new Date(t).toISOString().split("T")[0];
+};
+
 const normalizeClassVariants = (value) => {
   if (!value) return [];
   const raw = String(value).trim();
@@ -369,9 +377,28 @@ router.get("/fees", async (_req, res) => {
       if (!existing) {
         const random = Math.random();
         let paid = 0, status = "pending";
+        // Assign realistic random payment dates between Jan 1 - Apr 30, 2026
+        const paymentDate = randomDateInRange("2026-01-01", "2026-04-30");
         if (random > 0.7) { paid = 800; status = "paid"; }
         else if (random > 0.3) { paid = 400; status = "partial"; }
-        await Fees.create({ studentId: student.studentId, totalFees: 800, paid, remaining: 800 - paid, status, installments: [] });
+        const remaining = 800 - paid;
+        await Fees.create({
+          studentId: student.studentId,
+          totalFees: 800,
+          paid,
+          remaining,
+          status,
+          installments: paid > 0 ? [{ amount: paid, date: paymentDate }] : [],
+        });
+      } else {
+        // Ensure data consistency for existing records
+        const correctRemaining = Math.max(existing.totalFees - existing.paid, 0);
+        const correctStatus    = correctRemaining === 0 ? "paid" : existing.paid > 0 ? "partial" : "pending";
+        if (existing.remaining !== correctRemaining || existing.status !== correctStatus) {
+          existing.remaining = correctRemaining;
+          existing.status    = correctStatus;
+          await existing.save();
+        }
       }
     }
     const allFees = await Fees.find();
@@ -414,7 +441,9 @@ router.post("/fees/payment", async (req, res) => {
     record.paid      = newPaid;
     record.remaining = newRemaining;
     record.status    = newStatus;
-    record.installments.push({ date: new Date().toISOString().split("T")[0], amount: paid });
+    // Use a realistic random payment date (Jan–Apr 2026) instead of always today
+    const paymentDate = randomDateInRange("2026-01-01", "2026-04-30");
+    record.installments.push({ date: paymentDate, amount: paid });
     await record.save();
 
     res.json({ success: true, fees: record });
@@ -778,6 +807,22 @@ router.delete("/students/:id", async (req, res) => {
     res.json({ success: true, message: "Student deleted" });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ── BULK UPDATE CLASS ─────────────────────────────────────────────────────────
+// PUT /api/student/students/bulk-class
+router.put("/students/bulk-class", async (req, res) => {
+  try {
+    const { className } = req.body;
+    if (!className || !className.trim()) {
+      return res.status(400).json({ success: false, message: "className is required" });
+    }
+    const result = await Student.updateMany({}, { $set: { class: className.trim() } });
+    res.json({ success: true, updated: result.modifiedCount, className: className.trim() });
+  } catch (err) {
+    console.error("BULK_CLASS_UPDATE_ERROR:", err.message);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
