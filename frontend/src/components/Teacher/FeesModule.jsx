@@ -1,17 +1,9 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Toast from "../Toast";
 import "./FeesModule.css";
 
 const API   = import.meta.env.VITE_API_URL;
 const TODAY = new Date().toISOString().split("T")[0];
-
-// ── helpers ───────────────────────────────────────────────────────────────────
-const formatDate = (iso) => {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
-};
 
 // ── Progress bar ──────────────────────────────────────────────────────────────
 const ProgressBar = ({ paid, total }) => {
@@ -223,7 +215,7 @@ const InstallmentModal = ({ student, fee, onClose, onSaved }) => {
               {hasInst2 && (
                 <span>
                   <strong>2nd Installment:</strong> ₹{inst2Amount}
-                  {inst2Date ? ` · Due ${formatDate(inst2Date)}` : ""}
+                  {inst2Date ? ` · Due ${new Date(inst2Date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}` : ""}
                 </span>
               )}
             </div>
@@ -266,7 +258,7 @@ const ReminderConfirm = ({ student, fee, onClose, onConfirm, sending }) => {
           {remaining > 0 && (
             <div className="fm-reminder-preview">
               <i className="fas fa-indian-rupee-sign"></i> ₹{remaining} pending
-              {dueDate && <> · <i className="fas fa-calendar-day"></i> Due {formatDate(dueDate)}</>}
+              {dueDate && <> · <i className="fas fa-calendar-day"></i> Due {new Date(dueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</>}
             </div>
           )}
           <div className="fm-modal-actions">
@@ -293,7 +285,6 @@ const FeesModule = () => {
   const [reminderTarget, setReminderTarget] = useState(null);
   const [sending, setSending]               = useState(false);
   const [toast, setToast]                   = useState(null);
-  const migrationRan = useRef(false);
 
   const fetchFees = useCallback(async () => {
     try {
@@ -302,17 +293,6 @@ const FeesModule = () => {
       setFees(data.data || []);
     } catch { /* silent */ }
   }, []);
-
-  // One-time migration: fix stale payment dates in DB
-  const runDateMigration = useCallback(async () => {
-    if (migrationRan.current) return;
-    migrationRan.current = true;
-    try {
-      await fetch(`${API}/student/fees/fix-dates`, { method: "PUT" });
-      // Refetch so UI shows corrected dates immediately
-      await fetchFees();
-    } catch { /* non-fatal */ }
-  }, [fetchFees]);
 
   useEffect(() => {
     const load = async () => {
@@ -324,8 +304,8 @@ const FeesModule = () => {
       } finally { setLoading(false); }
     };
     load();
-    fetchFees().then(runDateMigration);
-  }, [fetchFees, runDateMigration]);
+    fetchFees();
+  }, [fetchFees]);
 
   const getFee = (studentId) => fees.find((f) => f.studentId === studentId);
 
@@ -405,7 +385,6 @@ const FeesModule = () => {
             const status    = fee?.status    || "pending";
             const hasPending = remaining > 0;
             const dueDate   = fee?.installmentPlan?.secondInstallmentDueDate;
-            const showDue   = hasPending && dueDate;
 
             return (
               <div
@@ -438,11 +417,15 @@ const FeesModule = () => {
                   </div>
                 </div>
 
-                {/* due date — only when there's a pending 2nd installment */}
-                {showDue && (
+                {/* due date for 2nd installment — only shown when pending */}
+                {hasPending && fee?.installmentPlan?.secondInstallmentDueDate && (
                   <div className="fm-due-date">
                     <i className="fas fa-calendar-day"></i>
-                    Due: {formatDate(dueDate)}
+                    Due: {(() => {
+                      const d = new Date(fee.installmentPlan.secondInstallmentDueDate);
+                      return isNaN(d.getTime()) ? fee.installmentPlan.secondInstallmentDueDate
+                        : d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+                    })()}
                   </div>
                 )}
 
@@ -455,15 +438,15 @@ const FeesModule = () => {
                   <ProgressBar paid={paid} total={total} />
                 </div>
 
-                {/* installment chips */}
+                {/* installment chips — show amounts only, no dates */}
                 {fee?.installments?.length > 0 && (
                   <div className="fm-installments">
                     {fee.installments.slice(-2).map((inst, i) => (
-                      <span key={i} className="fm-inst-chip">
-                        <i className="fas fa-calendar-day"></i>
-                        {inst.date ? ` ${formatDate(inst.date)}` : ""}
-                        {inst.amount ? ` · ₹${inst.amount}` : ""}
-                      </span>
+                      inst.amount > 0 && (
+                        <span key={i} className="fm-inst-chip">
+                          <i className="fas fa-indian-rupee-sign"></i> ₹{inst.amount}
+                        </span>
+                      )
                     ))}
                   </div>
                 )}

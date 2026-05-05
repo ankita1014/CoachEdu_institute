@@ -27,11 +27,11 @@ const feeSchema = new mongoose.Schema({
     default: "pending",
   },
 
-  // Legacy installment chips (kept for backward compat)
+  // Legacy installment chips (kept for backward compat — date field removed)
   installments: [
     {
       amount: Number,
-      date: String,
+      // date intentionally removed — no payment dates stored
     },
   ],
 

@@ -16,14 +16,6 @@ const router = express.Router();
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-// Returns a random ISO date string between two dates (inclusive)
-const randomDateInRange = (start, end) => {
-  const s = new Date(start).getTime();
-  const e = new Date(end).getTime();
-  const t = s + Math.random() * (e - s);
-  return new Date(t).toISOString().split("T")[0];
-};
-
 const normalizeClassVariants = (value) => {
   if (!value) return [];
   const raw = String(value).trim();
@@ -371,14 +363,15 @@ router.get("/notifications/:studentId", async (req, res) => {
 
 router.get("/fees", async (_req, res) => {
   try {
+    // One-time: migrate all students to class "4th"
+    await ensureClassIs4th();
+
     const students = await Student.find();
     for (const student of students) {
       const existing = await Fees.findOne({ studentId: student.studentId });
       if (!existing) {
         const random = Math.random();
         let paid = 0, status = "pending";
-        // Assign realistic random payment dates between Jan 1 - Apr 30, 2026
-        const paymentDate = randomDateInRange("2026-01-01", "2026-04-30");
         if (random > 0.7) { paid = 800; status = "paid"; }
         else if (random > 0.3) { paid = 400; status = "partial"; }
         const remaining = 800 - paid;
@@ -388,7 +381,7 @@ router.get("/fees", async (_req, res) => {
           paid,
           remaining,
           status,
-          installments: paid > 0 ? [{ amount: paid, date: paymentDate }] : [],
+          installments: paid > 0 ? [{ amount: paid }] : [],
         });
       } else {
         // Ensure data consistency for existing records
@@ -441,9 +434,7 @@ router.post("/fees/payment", async (req, res) => {
     record.paid      = newPaid;
     record.remaining = newRemaining;
     record.status    = newStatus;
-    // Use a realistic random payment date (Jan–Apr 2026) instead of always today
-    const paymentDate = randomDateInRange("2026-01-01", "2026-04-30");
-    record.installments.push({ date: paymentDate, amount: paid });
+    record.installments.push({ amount: paid });
     await record.save();
 
     res.json({ success: true, fees: record });
@@ -538,7 +529,6 @@ router.put("/fees/installment/:studentId", async (req, res) => {
     }
 
     const inst1Amount = total - inst2;
-    const today = new Date().toISOString().split("T")[0];
     const hasTwo = inst2 > 0;
 
     // Update structured installment plan
@@ -552,10 +542,10 @@ router.put("/fees/installment/:studentId", async (req, res) => {
       isSecondPaid:             record.paid >= total,
     };
 
-    // Rebuild legacy installment chips for display
+    // Rebuild legacy installment chips for display (no dates)
     record.installments = [
-      { amount: inst1Amount, date: today },
-      ...(hasTwo ? [{ amount: inst2, date: installment2Date || "" }] : []),
+      { amount: inst1Amount },
+      ...(hasTwo ? [{ amount: inst2 }] : []),
     ];
 
     // Recalculate status from actual paid amount vs new total
@@ -810,52 +800,21 @@ router.delete("/students/:id", async (req, res) => {
   }
 });
 
-// ── ONE-TIME MIGRATION: fix payment dates ────────────────────────────────────
-// PUT /api/student/fees/fix-dates
-// Replaces any installment date that is today or outside Jan–Apr 2026
-// with a unique random date in that range. Safe to call multiple times.
-router.put("/fees/fix-dates", async (req, res) => {
+// ── ONE-TIME: bulk update all students to class "4th" ────────────────────────
+// Runs automatically on first request to /fees after deploy
+let classMigrationDone = false;
+const ensureClassIs4th = async () => {
+  if (classMigrationDone) return;
+  classMigrationDone = true;
   try {
-    const START = new Date("2026-01-01").getTime();
-    const END   = new Date("2026-04-30").getTime();
-    const TODAY = new Date().toISOString().split("T")[0];
-
-    const isOutOfRange = (dateStr) => {
-      if (!dateStr) return true;
-      if (dateStr === TODAY) return true;
-      const t = new Date(dateStr).getTime();
-      return isNaN(t) || t < START || t > END;
-    };
-
-    const allFees = await Fees.find();
-    let updatedCount = 0;
-
-    for (const record of allFees) {
-      let changed = false;
-
-      if (record.installments && record.installments.length > 0) {
-        for (const inst of record.installments) {
-          if (isOutOfRange(inst.date)) {
-            // Each installment gets its own independent random date
-            inst.date = randomDateInRange("2026-01-01", "2026-04-30");
-            changed = true;
-          }
-        }
-      }
-
-      if (changed) {
-        record.markModified("installments");
-        await record.save();
-        updatedCount++;
-      }
-    }
-
-    res.json({ success: true, total: allFees.length, updated: updatedCount });
+    await Student.updateMany(
+      { class: { $nin: ["4th", "4", "Class 4"] } },
+      { $set: { class: "4th" } }
+    );
   } catch (err) {
-    console.error("FIX_DATES_ERROR:", err.message);
-    res.status(500).json({ success: false, message: err.message });
+    console.error("CLASS_MIGRATION_ERROR:", err.message);
   }
-});
+};
 // PUT /api/student/students/bulk-class
 router.put("/students/bulk-class", async (req, res) => {
   try {
