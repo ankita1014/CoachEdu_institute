@@ -3,22 +3,14 @@ import { useAcademicYear } from "../../context/AcademicYearContext";
 
 const DashboardTopbar = ({
   user,
-  darkMode,
   searchValue,
   onSearchChange,
   onSearchKeyDown,
-  filterRange,
-  onFilterChange,
   onToggleSidebar,
-  onToggleDarkMode,
   onLogout,
-  activeTab,
 }) => {
   const navigate = useNavigate();
   const { selectedYear } = useAcademicYear();
-
-  // These controls are only meaningful on the main dashboard tab
-  const showDateControls = !activeTab || activeTab === "dashboard";
 
   return (
     <header className="td-topbar">
@@ -38,7 +30,6 @@ const DashboardTopbar = ({
           />
         </div>
 
-        {/* Academic Year indicator */}
         {selectedYear && (
           <span className="td-ay-indicator">
             <i className="fas fa-calendar-alt"></i>
@@ -48,27 +39,6 @@ const DashboardTopbar = ({
       </div>
 
       <div className="td-topbar-right">
-        {showDateControls && (
-          <div className="td-filter-chips">
-            {["Today", "Week", "Month"].map((item) => (
-              <button
-                key={item}
-                className={filterRange === item ? "active" : ""}
-                onClick={() => onFilterChange(item)}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {showDateControls && (
-          <button className="td-icon-btn" onClick={onToggleDarkMode}>
-            <i className={darkMode ? "fas fa-sun" : "fas fa-moon"}></i>
-          </button>
-        )}
-
-        {/* Switch Year button */}
         <button
           className="td-switch-year-btn"
           onClick={() => navigate("/select-academic-year")}

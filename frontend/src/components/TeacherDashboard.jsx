@@ -76,11 +76,7 @@ const TeacherDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [collapsedSidebar, setCollapsedSidebar] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(
-    () => localStorage.getItem("teacherDashboardTheme") === "dark"
-  );
   const [searchValue, setSearchValue] = useState("");
-  const [filterRange, setFilterRange] = useState("Week");
   const [dashboardData, setDashboardData] = useState(createEmptyDashboardState);
 
   useEffect(() => {
@@ -88,13 +84,6 @@ const TeacherDashboard = () => {
       setActiveTab(location.state.activeTab);
     }
   }, [location.state]);
-
-  useEffect(() => {
-    localStorage.setItem(
-      "teacherDashboardTheme",
-      darkMode ? "dark" : "light"
-    );
-  }, [darkMode]);
 
   useEffect(() => {
     if (!user?.role || user.role !== "teacher") {
@@ -229,7 +218,7 @@ const TeacherDashboard = () => {
     );
   }, [menuItems, searchValue]);
 
-  const rangeDays = filterRange === "Today" ? 1 : filterRange === "Month" ? 30 : 7;
+  const rangeDays = 7; // fixed to last 7 days
 
   const filteredAttendance = useMemo(() => {
     const cutoff = new Date();
@@ -389,7 +378,7 @@ const TeacherDashboard = () => {
       items.push({
         iconClass: "fas fa-triangle-exclamation",
         title: "Attendance needs attention",
-        meta: `${attendanceSummary.percentage}% this ${filterRange.toLowerCase()}`,
+        meta: `${attendanceSummary.percentage}% this week`,
         tone: "red",
       });
     }
@@ -455,7 +444,6 @@ const TeacherDashboard = () => {
     dashboardData.fees,
     dashboardData.homework,
     dashboardData.tests,
-    filterRange,
   ]);
 
   const handleSearchKeyDown = (event) => {
@@ -541,7 +529,7 @@ const TeacherDashboard = () => {
               <span className="td-panel-label">Attendance Trend</span>
               <h3>Daily classroom consistency</h3>
             </div>
-            <span className="td-panel-pill">{filterRange}</span>
+            <span className="td-panel-pill">Last 7 days</span>
           </div>
           <div className="td-chart-wrap">
             {loading ? (
@@ -717,7 +705,7 @@ const TeacherDashboard = () => {
   }
 
   return (
-    <div className={`td-wrapper ${darkMode ? "dark" : ""}`}>
+    <div className="td-wrapper">
       <DashboardSidebar
         instituteName="CoachEdu Institute"
         items={filteredMenuItems.length ? filteredMenuItems : menuItems}
@@ -731,12 +719,9 @@ const TeacherDashboard = () => {
       <div className="td-main-shell">
         <DashboardTopbar
           user={user}
-          darkMode={darkMode}
           searchValue={searchValue}
           onSearchChange={setSearchValue}
           onSearchKeyDown={handleSearchKeyDown}
-          filterRange={filterRange}
-          onFilterChange={setFilterRange}
           onToggleSidebar={() => {
             if (window.innerWidth <= 1024) {
               setMobileSidebarOpen((current) => !current);
@@ -744,7 +729,6 @@ const TeacherDashboard = () => {
               setCollapsedSidebar((current) => !current);
             }
           }}
-          onToggleDarkMode={() => setDarkMode((current) => !current)}
           onLogout={handleLogout}
           activeTab={activeTab}
         />
