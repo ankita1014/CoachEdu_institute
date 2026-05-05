@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { resolveFileUrl } from "../utils/resolveFileUrl";
 import "./TeacherHomework.css";
 
 const SUBJECT_OPTIONS = ["English", "Hindi", "Marathi", "Mathematics"];
@@ -56,11 +57,11 @@ const ReviewModal = ({ homework, submission, onClose, onSave }) => {
           {submission.fileUrl ? (
             <div className="th-file-preview">
               {isImage(submission.fileUrl) ? (
-                <img src={submission.fileUrl} alt="submission" />
+                <img src={resolveFileUrl(submission.fileUrl)} alt="submission" />
               ) : isPdf(submission.fileUrl) ? (
-                <iframe src={submission.fileUrl} title="submission" />
+                <iframe src={resolveFileUrl(submission.fileUrl)} title="submission" />
               ) : (
-                <a href={submission.fileUrl} target="_blank" rel="noreferrer" className="th-download-link">
+                <a href={resolveFileUrl(submission.fileUrl)} target="_blank" rel="noreferrer" className="th-download-link">
                   <i className="fas fa-file-arrow-down"></i> Download Submission
                 </a>
               )}
@@ -158,7 +159,7 @@ const SubmissionsPanel = ({ homework, onUpdateSubmission }) => {
                 {tab !== "pending" && (
                   <td>
                     {sub.fileUrl
-                      ? <a href={sub.fileUrl} target="_blank" rel="noreferrer" className="th-view-link">
+                      ? <a href={resolveFileUrl(sub.fileUrl)} target="_blank" rel="noreferrer" className="th-view-link">
                           <i className="fas fa-eye"></i> View
                         </a>
                       : <span className="th-muted">No file</span>}
@@ -456,7 +457,7 @@ const TeacherHomework = () => {
                   <div className="th-hw-summary">
                     <span><i className="fas fa-users"></i> {submittedCount}/{total} submitted</span>
                     {hw.attachmentUrl && (
-                      <a href={hw.attachmentUrl} target="_blank" rel="noreferrer" className="th-view-link">
+                      <a href={resolveFileUrl(hw.attachmentUrl)} target="_blank" rel="noreferrer" className="th-view-link">
                         <i className="fas fa-paperclip"></i> Attachment
                       </a>
                     )}

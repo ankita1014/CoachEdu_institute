@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import Toast from "./Toast";
 import { useAuth } from "../context/AuthContext";
+import { resolveFileUrl } from "../utils/resolveFileUrl";
 import "./StudentDashboard.css";
 
 const API_BASE_URL = `${import.meta.env.VITE_API_URL}/student`;
@@ -445,10 +446,10 @@ const Profile = () => {
                 <span>{formatDate(item.createdAt)}</span>
               </div>
               <div className="sd-card-actions">
-                <a href={item.fileUrl} target="_blank" rel="noreferrer">
+                <a href={resolveFileUrl(item.fileUrl)} target="_blank" rel="noreferrer">
                   View
                 </a>
-                <a href={item.fileUrl} download>
+                <a href={resolveFileUrl(item.fileUrl)} download>
                   Download
                 </a>
               </div>

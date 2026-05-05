@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { resolveFileUrl } from "../utils/resolveFileUrl";
 import "./ParentDashboard.css";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -333,7 +334,7 @@ const ParentDashboard = () => {
                         <strong>{item.title}</strong>
                         <p>{item.subject} � {item.fileName}</p>
                       </div>
-                      <a className="parent-link-button" href={item.fileUrl} target="_blank" rel="noreferrer">Open</a>
+                      <a className="parent-link-button" href={resolveFileUrl(item.fileUrl)} target="_blank" rel="noreferrer">Open</a>
                     </article>
                   )) : <div className="parent-empty">No materials uploaded for this class yet.</div>}
                 </div>

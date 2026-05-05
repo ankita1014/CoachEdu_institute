@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { resolveFileUrl } from "../utils/resolveFileUrl";
 import "./TeacherMaterials.css";
 
 const SUBJECT_OPTIONS = ["English", "Hindi", "Marathi", "Mathematics"];
@@ -448,7 +449,7 @@ const TeacherMaterials = () => {
                             {openMenuId === material._id && (
                               <div className="tm-action-menu">
                                 <a
-                                  href={material.fileUrl}
+                                  href={resolveFileUrl(material.fileUrl)}
                                   target="_blank"
                                   rel="noreferrer"
                                   onClick={() => setOpenMenuId(null)}
@@ -456,7 +457,7 @@ const TeacherMaterials = () => {
                                   View
                                 </a>
                                 <a
-                                  href={material.fileUrl}
+                                  href={resolveFileUrl(material.fileUrl)}
                                   download={material.fileName}
                                   onClick={() => setOpenMenuId(null)}
                                 >
@@ -480,10 +481,10 @@ const TeacherMaterials = () => {
                           </div>
 
                           <div className="tm-mobile-actions">
-                            <a href={material.fileUrl} target="_blank" rel="noreferrer">
+                            <a href={resolveFileUrl(material.fileUrl)} target="_blank" rel="noreferrer">
                               View
                             </a>
-                            <a href={material.fileUrl} download={material.fileName}>
+                            <a href={resolveFileUrl(material.fileUrl)} download={material.fileName}>
                               Download
                             </a>
                             <button type="button" onClick={() => startEdit(material)}>

@@ -800,6 +800,57 @@ router.delete("/students/:id", async (req, res) => {
   }
 });
 
+// ── ONE-TIME: migrate stale local file URLs ───────────────────────────────────
+// PUT /api/student/migrate-file-urls
+// Clears any fileUrl that points to localhost or a relative /uploads/ path.
+// Safe to call multiple times — only touches records with stale URLs.
+router.put("/migrate-file-urls", async (req, res) => {
+  try {
+    const isStale = (url) =>
+      url && (url.includes("localhost") || url.startsWith("/uploads/"));
+
+    const allHomework = await Homework.find();
+    let updatedDocs = 0;
+
+    for (const hw of allHomework) {
+      let changed = false;
+
+      if (isStale(hw.attachmentUrl)) {
+        hw.attachmentUrl = "";
+        hw.attachmentName = "";
+        changed = true;
+      }
+
+      for (const sub of hw.submissions || []) {
+        if (isStale(sub.fileUrl)) {
+          sub.fileUrl = "";
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        hw.markModified("submissions");
+        await hw.save();
+        updatedDocs++;
+      }
+    }
+
+    const allMaterials = await Material.find();
+    for (const mat of allMaterials) {
+      if (isStale(mat.fileUrl)) {
+        mat.fileUrl = "";
+        await mat.save();
+        updatedDocs++;
+      }
+    }
+
+    res.json({ success: true, updatedDocs });
+  } catch (err) {
+    console.error("MIGRATE_FILE_URLS_ERROR:", err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // ── ONE-TIME: bulk update all students to class "4th" ────────────────────────
 // Runs automatically on first request to /fees after deploy
 let classMigrationDone = false;
