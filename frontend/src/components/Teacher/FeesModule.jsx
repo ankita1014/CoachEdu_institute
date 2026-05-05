@@ -100,7 +100,108 @@ const PaymentModal = ({ student, fee, onClose, onSaved }) => {
   );
 };
 
-// ── Reminder confirm modal ────────────────────────────────────────────────────
+// ── Installment modal ─────────────────────────────────────────────────────────
+const InstallmentModal = ({ student, fee, onClose, onSaved }) => {
+  const currentTotal = fee?.totalFees || 0;
+  const [totalAmount, setTotalAmount]       = useState(String(currentTotal || ""));
+  const [inst2Amount, setInst2Amount]       = useState("");
+  const [inst2Date, setInst2Date]           = useState("");
+  const [saving, setSaving]                 = useState(false);
+  const [error, setError]                   = useState("");
+
+  const inst1Amount = Math.max((Number(totalAmount) || 0) - (Number(inst2Amount) || 0), 0);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const total = Number(totalAmount);
+    const inst2 = Number(inst2Amount) || 0;
+    if (!total || total <= 0)          { setError("Enter a valid total amount"); return; }
+    if (inst2 < 0 || inst2 > total)    { setError("2nd installment cannot exceed total"); return; }
+    setSaving(true);
+    try {
+      const res = await fetch(`${API}/student/fees/installment/${student.studentId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ totalAmount: total, installment2Amount: inst2, installment2Date: inst2Date }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || "Failed");
+      onSaved();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fm-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="fm-modal">
+        <div className="fm-modal-header">
+          <div className="fm-modal-icon" style={{ background: "linear-gradient(135deg,#0ea5e9,#38bdf8)" }}>
+            <i className="fas fa-calendar-alt"></i>
+          </div>
+          <div>
+            <h3 className="fm-modal-title">Set Installment Plan</h3>
+            <p className="fm-modal-sub">{student.name} · {student.studentId}</p>
+          </div>
+          <button className="fm-modal-close" onClick={onClose}>×</button>
+        </div>
+        <form onSubmit={handleSubmit} className="fm-modal-body">
+          <div className="fm-field">
+            <label>Total Fees (₹) *</label>
+            <div className="fm-input-wrap">
+              <span className="fm-input-prefix">₹</span>
+              <input
+                type="number" min="1"
+                placeholder="e.g. 800"
+                value={totalAmount}
+                onChange={(e) => { setTotalAmount(e.target.value); setError(""); }}
+                autoFocus
+              />
+            </div>
+          </div>
+          <div className="fm-field">
+            <label>2nd Installment Amount (₹)</label>
+            <div className="fm-input-wrap">
+              <span className="fm-input-prefix">₹</span>
+              <input
+                type="number" min="0" max={totalAmount || undefined}
+                placeholder="e.g. 400"
+                value={inst2Amount}
+                onChange={(e) => { setInst2Amount(e.target.value); setError(""); }}
+              />
+            </div>
+          </div>
+          {inst2Amount && Number(inst2Amount) > 0 && (
+            <div className="fm-field">
+              <label>2nd Installment Due Date</label>
+              <input
+                type="date"
+                value={inst2Date}
+                onChange={(e) => setInst2Date(e.target.value)}
+                style={{ padding: "10px 13px", borderRadius: 10, border: "1.5px solid #e2e8f0", background: "#f8fafc", fontSize: "0.9rem", outline: "none" }}
+              />
+            </div>
+          )}
+          {Number(totalAmount) > 0 && (
+            <div style={{ background: "#f0f9ff", borderRadius: 10, padding: "12px 14px", fontSize: "0.82rem", color: "#0369a1", display: "flex", flexDirection: "column", gap: 4 }}>
+              <span><strong>1st Installment:</strong> ₹{inst1Amount}</span>
+              {Number(inst2Amount) > 0 && <span><strong>2nd Installment:</strong> ₹{inst2Amount}{inst2Date ? ` · Due ${inst2Date}` : ""}</span>}
+            </div>
+          )}
+          {error && <p className="fm-error">{error}</p>}
+          <div className="fm-modal-actions">
+            <button type="button" className="fm-btn-ghost" onClick={onClose}>Cancel</button>
+            <button type="submit" className="fm-btn-primary" disabled={saving}>
+              {saving ? <><i className="fas fa-spinner fa-spin"></i> Saving…</> : <><i className="fas fa-check"></i> Save Plan</>}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 const ReminderConfirm = ({ student, onClose, onConfirm, sending }) => (
   <div className="fm-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
     <div className="fm-modal fm-modal-sm">
@@ -134,6 +235,8 @@ const FeesModule = () => {
   const [loading, setLoading] = useState(true);
   const [installmentTarget, setInstallmentTarget] = useState(null);
   const [reminderTarget, setReminderTarget] = useState(null);
+  const [setInstTarget, setSetInstTarget] = useState(null);
+  const [markingAllPaid, setMarkingAllPaid] = useState(false);
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -166,6 +269,28 @@ const FeesModule = () => {
     setToast({ message: "Payment recorded successfully.", type: "success" });
   };
 
+  const handleInstPlanSaved = () => {
+    setSetInstTarget(null);
+    fetchFees();
+    setToast({ message: "Installment plan saved successfully.", type: "success" });
+  };
+
+  const handleMarkAllPaid = async () => {
+    if (!window.confirm("Mark ALL students as fully paid? This will set paid = total fees and remaining = ₹0 for every student.")) return;
+    setMarkingAllPaid(true);
+    try {
+      const res = await fetch(`${API}/student/fees/mark-all-paid`, { method: "PUT" });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || "Failed");
+      fetchFees();
+      setToast({ message: `All students marked as paid (${data.updated} records updated).`, type: "success" });
+    } catch (err) {
+      setToast({ message: err.message || "Failed to mark all paid.", type: "error" });
+    } finally {
+      setMarkingAllPaid(false);
+    }
+  };
+
   const handleSendReminder = async () => {
     if (!reminderTarget) return;
     setSending(true);
@@ -194,19 +319,31 @@ const FeesModule = () => {
           <h2 className="fm-title">Fees Management</h2>
           <p className="fm-subtitle">Track payments, set installments, and send reminders.</p>
         </div>
-        <div className="fm-header-stats">
-          <div className="fm-stat">
-            <span>{students.length}</span>
-            <label>Students</label>
+        <div className="fm-header-right">
+          <div className="fm-header-stats">
+            <div className="fm-stat">
+              <span>{students.length}</span>
+              <label>Students</label>
+            </div>
+            <div className="fm-stat">
+              <span>{fees.filter(f => f.status === "paid").length}</span>
+              <label>Paid</label>
+            </div>
+            <div className="fm-stat fm-stat-warn">
+              <span>{fees.filter(f => f.status !== "paid").length}</span>
+              <label>Pending</label>
+            </div>
           </div>
-          <div className="fm-stat">
-            <span>{fees.filter(f => f.status === "paid").length}</span>
-            <label>Paid</label>
-          </div>
-          <div className="fm-stat fm-stat-warn">
-            <span>{fees.filter(f => f.status !== "paid").length}</span>
-            <label>Pending</label>
-          </div>
+          <button
+            className="fm-btn-mark-all-paid"
+            onClick={handleMarkAllPaid}
+            disabled={markingAllPaid}
+            title="Mark all students as fully paid (End of Year)"
+          >
+            {markingAllPaid
+              ? <><i className="fas fa-spinner fa-spin"></i> Updating…</>
+              : <><i className="fas fa-check-double"></i> Mark All as Paid (End Year)</>}
+          </button>
         </div>
       </div>
 
@@ -288,6 +425,9 @@ const FeesModule = () => {
                       <i className="fas fa-indian-rupee-sign"></i> Record Payment
                     </button>
                   )}
+                  <button className="fm-btn-set-inst" onClick={() => setSetInstTarget(s)}>
+                    <i className="fas fa-calendar-alt"></i> Set Installment
+                  </button>
                   {hasPending && (
                     <button className="fm-btn-remind" onClick={() => setReminderTarget(s)}>
                       <i className="fas fa-bell"></i> Remind
@@ -307,6 +447,15 @@ const FeesModule = () => {
           fee={getFee(installmentTarget.studentId)}
           onClose={() => setInstallmentTarget(null)}
           onSaved={handleInstallmentSaved}
+        />
+      )}
+
+      {setInstTarget && (
+        <InstallmentModal
+          student={setInstTarget}
+          fee={getFee(setInstTarget.studentId)}
+          onClose={() => setSetInstTarget(null)}
+          onSaved={handleInstPlanSaved}
         />
       )}
 

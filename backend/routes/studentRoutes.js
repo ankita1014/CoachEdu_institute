@@ -425,20 +425,110 @@ router.post("/fees/payment", async (req, res) => {
 });
 
 router.post("/send-reminder", async (req, res) => {
-  const { studentId } = req.body;
-  await Notification.create({
-    title: "Fee Reminder",
-    message: "Fees pending. Please pay remaining amount.",
-    type: "fees",
-    audience: "parents",
-    teacherId: "system",
-    teacherName: "System",
-    status: "sent",
-    sentAt: new Date(),
-    recipients: [{ studentId, name: "Parent", className: "All Classes", audience: "parents", deliveryStatus: "delivered" }],
-    deliverySummary: { delivered: 1, pending: 0, failed: 0 },
-  });
-  res.json({ success: true });
+  try {
+    const { studentId } = req.body;
+    if (!studentId) {
+      return res.status(400).json({ success: false, message: "studentId is required" });
+    }
+    const student = await getStudentByIdentifier(studentId);
+    const studentName = student?.name || "your child";
+    await Notification.create({
+      title: "Fee Payment Reminder",
+      message: `Fee payment is pending for ${studentName}. Please pay the remaining amount at the earliest.`,
+      type: "fees",
+      audience: "parents",
+      teacherId: "system",
+      teacherName: "System",
+      status: "sent",
+      sentAt: new Date(),
+      recipients: [{ studentId, name: studentName, className: student?.class || "All Classes", audience: "parents", deliveryStatus: "delivered" }],
+      deliverySummary: { delivered: 1, pending: 0, failed: 0 },
+    });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("REMINDER_ERROR:", err.message);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// ── SET INSTALLMENT PLAN ──────────────────────────────────────────────────────
+// PUT /api/student/fees/installment/:studentId
+router.put("/fees/installment/:studentId", async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const { totalAmount, installment2Amount, installment2Date } = req.body;
+
+    if (!studentId) {
+      return res.status(400).json({ success: false, message: "studentId is required" });
+    }
+
+    const total = Number(totalAmount);
+    const inst2 = Number(installment2Amount);
+
+    if (!total || total <= 0) {
+      return res.status(400).json({ success: false, message: "Valid totalAmount is required" });
+    }
+    if (inst2 < 0 || inst2 > total) {
+      return res.status(400).json({ success: false, message: "installment2Amount must be between 0 and totalAmount" });
+    }
+
+    let record = await Fees.findOne({ studentId });
+    if (!record) {
+      record = await Fees.create({ studentId, totalFees: total, paid: 0, remaining: total, status: "pending", installments: [] });
+    }
+
+    const inst1Amount = total - inst2;
+    const today = new Date().toISOString().split("T")[0];
+
+    // Rebuild installments: inst1 is already paid (or partially), inst2 is upcoming
+    record.totalFees = total;
+    record.installments = [
+      { amount: inst1Amount, date: today },
+      ...(inst2 > 0 ? [{ amount: inst2, date: installment2Date || "" }] : []),
+    ];
+
+    // Recalculate status based on current paid vs new total
+    const newRemaining = Math.max(total - record.paid, 0);
+    record.remaining = newRemaining;
+    record.status = newRemaining === 0 ? "paid" : record.paid > 0 ? "partial" : "pending";
+
+    await record.save();
+    res.json({ success: true, fees: record });
+  } catch (err) {
+    console.error("INSTALLMENT_ERROR:", err.message);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// ── MARK ALL STUDENTS AS FULLY PAID (End of Year) ────────────────────────────
+// PUT /api/student/fees/mark-all-paid
+router.put("/fees/mark-all-paid", async (req, res) => {
+  try {
+    const allFees = await Fees.find();
+    if (!allFees.length) {
+      return res.json({ success: true, updated: 0, message: "No fee records found" });
+    }
+
+    // Atomic bulk update: set paidAmount = totalFees, remaining = 0, status = "paid"
+    const bulkOps = allFees.map((record) => ({
+      updateOne: {
+        filter: { _id: record._id },
+        update: {
+          $set: {
+            paid: record.totalFees,
+            remaining: 0,
+            status: "paid",
+          },
+        },
+      },
+    }));
+
+    const result = await Fees.bulkWrite(bulkOps);
+    res.json({ success: true, updated: result.modifiedCount });
+  } catch (err) {
+    console.error("MARK_ALL_PAID_ERROR:", err.message);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
 });
 
 router.post("/add", async (req, res) => {
