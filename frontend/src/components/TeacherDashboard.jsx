@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { useAuth } from "../context/AuthContext";
+import { useAcademicYear } from "../context/AcademicYearContext";
 import DashboardActivityItem from "./teacherDashboard/DashboardActivityItem";
 import DashboardSidebar from "./teacherDashboard/DashboardSidebar";
 import DashboardStatCard from "./teacherDashboard/DashboardStatCard";
@@ -57,6 +58,20 @@ const TeacherDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { selectedYear } = useAcademicYear();
+
+  // Auto-redirect to year selection if no year is chosen
+  useEffect(() => {
+    if (selectedYear === null) {
+      // Give context a moment to restore from localStorage before redirecting
+      const timer = setTimeout(() => {
+        if (!localStorage.getItem("selectedAcademicYear")) {
+          navigate("/select-academic-year");
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedYear, navigate]);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [loading, setLoading] = useState(true);
   const [collapsedSidebar, setCollapsedSidebar] = useState(false);

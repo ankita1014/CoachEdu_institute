@@ -19,6 +19,7 @@ import parentRoutes from "./routes/parentRoutes.js";
 import chapterRoutes from "./routes/chapterRoutes.js";
 import subjectRoutes from "./routes/subjectRoutes.js";
 import inquiryRoutes from "./routes/inquiryRoutes.js";
+import academicYearRoutes from "./routes/academicYearRoutes.js";
 import { syncAllParents } from "./utils/parentSync.js";
 import { syncPasswordFormat } from "./utils/parentSync.js";
 dotenv.config();
@@ -72,6 +73,7 @@ app.use('/api/demo-bookings', demoBookingRoutes);
 app.use('/api/contests', contestRoutes);
 app.use("/api/subjects", subjectRoutes);
 app.use("/api/inquiry", inquiryRoutes);
+app.use("/api/academic-years", academicYearRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'active' });

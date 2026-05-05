@@ -1,3 +1,6 @@
+import { useNavigate } from "react-router-dom";
+import { useAcademicYear } from "../../context/AcademicYearContext";
+
 const DashboardTopbar = ({
   user,
   darkMode,
@@ -9,8 +12,11 @@ const DashboardTopbar = ({
   onToggleSidebar,
   onToggleDarkMode,
   onLogout,
-  activeTab,          // used to hide irrelevant controls on certain tabs
+  activeTab,
 }) => {
+  const navigate = useNavigate();
+  const { selectedYear } = useAcademicYear();
+
   // These controls are only meaningful on the main dashboard tab
   const showDateControls = !activeTab || activeTab === "dashboard";
 
@@ -31,6 +37,14 @@ const DashboardTopbar = ({
             placeholder="Search module or jump to a section..."
           />
         </div>
+
+        {/* Academic Year indicator */}
+        {selectedYear && (
+          <span className="td-ay-indicator">
+            <i className="fas fa-calendar-alt"></i>
+            AY {selectedYear.name}
+          </span>
+        )}
       </div>
 
       <div className="td-topbar-right">
@@ -53,6 +67,16 @@ const DashboardTopbar = ({
             <i className={darkMode ? "fas fa-sun" : "fas fa-moon"}></i>
           </button>
         )}
+
+        {/* Switch Year button */}
+        <button
+          className="td-switch-year-btn"
+          onClick={() => navigate("/select-academic-year")}
+          title="Switch Academic Year"
+        >
+          <i className="fas fa-rotate"></i>
+          <span>Switch Year</span>
+        </button>
 
         <div className="td-user-chip">
           <div className="td-user-avatar">{user?.name?.charAt(0) || "T"}</div>

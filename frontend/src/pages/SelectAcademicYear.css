@@ -1,0 +1,207 @@
+/* ── full-page wrapper ── */
+.say-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background:
+    radial-gradient(circle at top right, rgba(99,102,241,0.14), transparent 38%),
+    linear-gradient(160deg, #0f172a 0%, #172554 55%, #1e1b4b 100%);
+}
+
+/* ── centered card ── */
+.say-card {
+  width: 100%;
+  max-width: 640px;
+  background: rgba(255,255,255,0.97);
+  border-radius: 28px;
+  padding: 40px 36px 32px;
+  box-shadow: 0 40px 100px rgba(15,23,42,0.28);
+}
+
+/* ── header ── */
+.say-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 32px;
+}
+
+.say-logo-badge {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #4f6df5, #7c3aed);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.say-eyebrow {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6366f1;
+}
+
+.say-title {
+  margin: 0 0 6px;
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.say-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+/* ── year grid ── */
+.say-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+/* ── year card button ── */
+.say-year-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 18px 20px;
+  border-radius: 18px;
+  border: 2px solid #e2e8f0;
+  background: #f8fafc;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.18s, background 0.18s, transform 0.18s, box-shadow 0.18s;
+}
+
+.say-year-card:hover {
+  border-color: #6366f1;
+  background: #eef2ff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(99,102,241,0.14);
+}
+
+.say-year-card--active {
+  border-color: #4f6df5;
+  background: #eef2ff;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.18);
+}
+
+.say-year-card--current {
+  border-color: #22c55e;
+}
+
+.say-year-card--current:hover,
+.say-year-card--current.say-year-card--active {
+  border-color: #16a34a;
+  background: #f0fdf4;
+  box-shadow: 0 8px 24px rgba(34,197,94,0.14);
+}
+
+.say-year-icon {
+  font-size: 1.8rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.say-year-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.say-year-name {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.say-current-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 20px;
+  background: #dcfce7;
+  color: #16a34a;
+  font-size: 0.7rem;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.say-selected-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 20px;
+  background: #e0e7ff;
+  color: #4338ca;
+  font-size: 0.7rem;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.say-year-range {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.say-enter-arrow {
+  font-size: 1rem;
+  color: #94a3b8;
+  flex-shrink: 0;
+  transition: color 0.18s, transform 0.18s;
+}
+
+.say-year-card:hover .say-enter-arrow,
+.say-year-card--active .say-enter-arrow {
+  color: #4f6df5;
+  transform: translateX(3px);
+}
+
+.say-year-card--active .say-enter-arrow {
+  color: #16a34a;
+  transform: none;
+}
+
+/* ── skeleton ── */
+.say-year-skeleton {
+  height: 76px;
+  border-radius: 18px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: say-shimmer 1.4s infinite;
+}
+@keyframes say-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── footer note ── */
+.say-footer-note {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ── responsive ── */
+@media (max-width: 480px) {
+  .say-card { padding: 28px 20px 24px; border-radius: 20px; }
+  .say-title { font-size: 1.3rem; }
+  .say-header { flex-direction: column; gap: 12px; }
+}

@@ -5,6 +5,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { AcademicYearProvider } from "./context/AcademicYearContext";
 import { useEffect } from "react";
 import Toast from "./components/Toast";
 
@@ -32,6 +33,7 @@ import TeacherSubjects from "./components/TeacherSubjects";
 import TeacherSubjectDetail from "./pages/TeacherSubjectDetail";
 import InquiryPage from "./pages/InquiryPage";
 import TestAttempt from "./pages/TestAttempt";
+import SelectAcademicYear from "./pages/SelectAcademicYear";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./index.css";
 
@@ -59,7 +61,8 @@ function App() {
     const isWorkspaceRoute =
       location.pathname === "/teacher-dashboard" ||
       location.pathname === "/profile" ||
-      location.pathname === "/parent-dashboard";
+      location.pathname === "/parent-dashboard" ||
+      location.pathname === "/select-academic-year";
     const hideFooter = isWorkspaceRoute || location.pathname === "/";
     const hideNavbar = isWorkspaceRoute;
 
@@ -90,6 +93,14 @@ function App() {
           <Route path="/signup" element={<SignUp />} />
 
           {/* DASHBOARDS */}
+          <Route
+            path="/select-academic-year"
+            element={
+              <ProtectedRoute allowedRoles={["teacher"]}>
+                <SelectAcademicYear />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/teacher-dashboard"
             element={
@@ -207,8 +218,10 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <ScrollToTop />
-        <AppLayout />
+        <AcademicYearProvider>
+          <ScrollToTop />
+          <AppLayout />
+        </AcademicYearProvider>
       </AuthProvider>
     </Router>
   );
