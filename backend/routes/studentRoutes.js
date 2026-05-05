@@ -810,7 +810,52 @@ router.delete("/students/:id", async (req, res) => {
   }
 });
 
-// ── BULK UPDATE CLASS ─────────────────────────────────────────────────────────
+// ── ONE-TIME MIGRATION: fix payment dates ────────────────────────────────────
+// PUT /api/student/fees/fix-dates
+// Replaces any installment date that is today or outside Jan–Apr 2026
+// with a unique random date in that range. Safe to call multiple times.
+router.put("/fees/fix-dates", async (req, res) => {
+  try {
+    const START = new Date("2026-01-01").getTime();
+    const END   = new Date("2026-04-30").getTime();
+    const TODAY = new Date().toISOString().split("T")[0];
+
+    const isOutOfRange = (dateStr) => {
+      if (!dateStr) return true;
+      if (dateStr === TODAY) return true;
+      const t = new Date(dateStr).getTime();
+      return isNaN(t) || t < START || t > END;
+    };
+
+    const allFees = await Fees.find();
+    let updatedCount = 0;
+
+    for (const record of allFees) {
+      let changed = false;
+
+      if (record.installments && record.installments.length > 0) {
+        for (const inst of record.installments) {
+          if (isOutOfRange(inst.date)) {
+            // Each installment gets its own independent random date
+            inst.date = randomDateInRange("2026-01-01", "2026-04-30");
+            changed = true;
+          }
+        }
+      }
+
+      if (changed) {
+        record.markModified("installments");
+        await record.save();
+        updatedCount++;
+      }
+    }
+
+    res.json({ success: true, total: allFees.length, updated: updatedCount });
+  } catch (err) {
+    console.error("FIX_DATES_ERROR:", err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 // PUT /api/student/students/bulk-class
 router.put("/students/bulk-class", async (req, res) => {
   try {

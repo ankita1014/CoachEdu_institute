@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Toast from "../Toast";
 import "./FeesModule.css";
 
@@ -293,6 +293,7 @@ const FeesModule = () => {
   const [reminderTarget, setReminderTarget] = useState(null);
   const [sending, setSending]               = useState(false);
   const [toast, setToast]                   = useState(null);
+  const migrationRan = useRef(false);
 
   const fetchFees = useCallback(async () => {
     try {
@@ -301,6 +302,17 @@ const FeesModule = () => {
       setFees(data.data || []);
     } catch { /* silent */ }
   }, []);
+
+  // One-time migration: fix stale payment dates in DB
+  const runDateMigration = useCallback(async () => {
+    if (migrationRan.current) return;
+    migrationRan.current = true;
+    try {
+      await fetch(`${API}/student/fees/fix-dates`, { method: "PUT" });
+      // Refetch so UI shows corrected dates immediately
+      await fetchFees();
+    } catch { /* non-fatal */ }
+  }, [fetchFees]);
 
   useEffect(() => {
     const load = async () => {
@@ -312,8 +324,8 @@ const FeesModule = () => {
       } finally { setLoading(false); }
     };
     load();
-    fetchFees();
-  }, [fetchFees]);
+    fetchFees().then(runDateMigration);
+  }, [fetchFees, runDateMigration]);
 
   const getFee = (studentId) => fees.find((f) => f.studentId === studentId);
 
