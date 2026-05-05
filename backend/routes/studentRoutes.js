@@ -432,16 +432,38 @@ router.post("/send-reminder", async (req, res) => {
     }
     const student = await getStudentByIdentifier(studentId);
     const studentName = student?.name || "your child";
+
+    // Include due date and remaining amount in the message if available
+    const feeRecord = await Fees.findOne({ studentId });
+    const remaining = feeRecord?.remaining || 0;
+    const dueDate   = feeRecord?.installmentPlan?.secondInstallmentDueDate || "";
+
+    let message = `Fee payment of ₹${remaining} is pending for ${studentName}.`;
+    if (dueDate) {
+      const formatted = new Date(dueDate).toLocaleDateString("en-IN", {
+        day: "numeric", month: "short", year: "numeric",
+      });
+      message += ` Due by ${formatted}.`;
+    } else {
+      message += " Please pay the remaining amount at the earliest.";
+    }
+
     await Notification.create({
       title: "Fee Payment Reminder",
-      message: `Fee payment is pending for ${studentName}. Please pay the remaining amount at the earliest.`,
+      message,
       type: "fees",
       audience: "parents",
       teacherId: "system",
       teacherName: "System",
       status: "sent",
       sentAt: new Date(),
-      recipients: [{ studentId, name: studentName, className: student?.class || "All Classes", audience: "parents", deliveryStatus: "delivered" }],
+      recipients: [{
+        studentId,
+        name: studentName,
+        className: student?.class || "All Classes",
+        audience: "parents",
+        deliveryStatus: "delivered",
+      }],
       deliverySummary: { delivered: 1, pending: 0, failed: 0 },
     });
     res.json({ success: true });
@@ -458,75 +480,64 @@ router.put("/fees/installment/:studentId", async (req, res) => {
     const { studentId } = req.params;
     const { totalAmount, installment2Amount, installment2Date } = req.body;
 
-    if (!studentId) {
-      return res.status(400).json({ success: false, message: "studentId is required" });
-    }
-
     const total = Number(totalAmount);
-    const inst2 = Number(installment2Amount);
+    const inst2 = Number(installment2Amount) || 0;
 
     if (!total || total <= 0) {
       return res.status(400).json({ success: false, message: "Valid totalAmount is required" });
     }
     if (inst2 < 0 || inst2 > total) {
-      return res.status(400).json({ success: false, message: "installment2Amount must be between 0 and totalAmount" });
+      return res.status(400).json({ success: false, message: "2nd installment amount must be between 0 and total" });
+    }
+    // Validate due date is a future date (if provided)
+    if (inst2 > 0 && installment2Date) {
+      const due = new Date(installment2Date);
+      if (isNaN(due.getTime())) {
+        return res.status(400).json({ success: false, message: "Invalid due date" });
+      }
+      if (due < new Date(new Date().toDateString())) {
+        return res.status(400).json({ success: false, message: "Due date must be today or a future date" });
+      }
     }
 
     let record = await Fees.findOne({ studentId });
     if (!record) {
-      record = await Fees.create({ studentId, totalFees: total, paid: 0, remaining: total, status: "pending", installments: [] });
+      record = await Fees.create({
+        studentId, totalFees: total, paid: 0, remaining: total,
+        status: "pending", installments: [],
+      });
     }
 
     const inst1Amount = total - inst2;
     const today = new Date().toISOString().split("T")[0];
+    const hasTwo = inst2 > 0;
 
-    // Rebuild installments: inst1 is already paid (or partially), inst2 is upcoming
+    // Update structured installment plan
     record.totalFees = total;
+    record.installmentPlan = {
+      totalInstallments:        hasTwo ? 2 : 1,
+      firstInstallmentAmount:   inst1Amount,
+      secondInstallmentAmount:  inst2,
+      secondInstallmentDueDate: hasTwo ? (installment2Date || "") : "",
+      isFirstPaid:              record.paid >= inst1Amount,
+      isSecondPaid:             record.paid >= total,
+    };
+
+    // Rebuild legacy installment chips for display
     record.installments = [
       { amount: inst1Amount, date: today },
-      ...(inst2 > 0 ? [{ amount: inst2, date: installment2Date || "" }] : []),
+      ...(hasTwo ? [{ amount: inst2, date: installment2Date || "" }] : []),
     ];
 
-    // Recalculate status based on current paid vs new total
+    // Recalculate status from actual paid amount vs new total
     const newRemaining = Math.max(total - record.paid, 0);
     record.remaining = newRemaining;
-    record.status = newRemaining === 0 ? "paid" : record.paid > 0 ? "partial" : "pending";
+    record.status    = newRemaining === 0 ? "paid" : record.paid > 0 ? "partial" : "pending";
 
     await record.save();
     res.json({ success: true, fees: record });
   } catch (err) {
     console.error("INSTALLMENT_ERROR:", err.message);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-});
-
-// ── MARK ALL STUDENTS AS FULLY PAID (End of Year) ────────────────────────────
-// PUT /api/student/fees/mark-all-paid
-router.put("/fees/mark-all-paid", async (req, res) => {
-  try {
-    const allFees = await Fees.find();
-    if (!allFees.length) {
-      return res.json({ success: true, updated: 0, message: "No fee records found" });
-    }
-
-    // Atomic bulk update: set paidAmount = totalFees, remaining = 0, status = "paid"
-    const bulkOps = allFees.map((record) => ({
-      updateOne: {
-        filter: { _id: record._id },
-        update: {
-          $set: {
-            paid: record.totalFees,
-            remaining: 0,
-            status: "paid",
-          },
-        },
-      },
-    }));
-
-    const result = await Fees.bulkWrite(bulkOps);
-    res.json({ success: true, updated: result.modifiedCount });
-  } catch (err) {
-    console.error("MARK_ALL_PAID_ERROR:", err.message);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });

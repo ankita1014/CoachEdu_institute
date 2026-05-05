@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 
 const feeSchema = new mongoose.Schema({
-  // ✅ FIXED: use STRING instead of ObjectId
   studentId: {
     type: String,
     required: true,
@@ -24,15 +23,27 @@ const feeSchema = new mongoose.Schema({
 
   status: {
     type: String,
+    enum: ["pending", "partial", "paid"],
     default: "pending",
   },
 
+  // Legacy installment chips (kept for backward compat)
   installments: [
     {
       amount: Number,
       date: String,
     },
   ],
+
+  // Structured installment plan set by teacher
+  installmentPlan: {
+    totalInstallments:        { type: Number, default: 1 },
+    firstInstallmentAmount:   { type: Number, default: 0 },
+    secondInstallmentAmount:  { type: Number, default: 0 },
+    secondInstallmentDueDate: { type: String, default: "" },  // ISO date string "YYYY-MM-DD"
+    isFirstPaid:              { type: Boolean, default: false },
+    isSecondPaid:             { type: Boolean, default: false },
+  },
 }, { timestamps: true });
 
 export default mongoose.model("Fees", feeSchema);
