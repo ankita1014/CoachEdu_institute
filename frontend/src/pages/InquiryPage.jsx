@@ -85,14 +85,7 @@ const InquiryPage = () => {
               <div className="iq-contact-icon"><i className="fas fa-envelope"></i></div>
               <div>
                 <span>Email us at</span>
-                <strong>dnyanminakshi6@gmail.com</strong>
-              </div>
-            </div>
-            <div className="iq-contact-item">
-              <div className="iq-contact-icon"><i className="fas fa-phone"></i></div>
-              <div>
-                <span>Call us at</span>
-                <strong>+91 7875275740</strong>
+                <strong>sarikaaaaaaa15@gmail.com</strong>
               </div>
             </div>
             <div className="iq-contact-item">

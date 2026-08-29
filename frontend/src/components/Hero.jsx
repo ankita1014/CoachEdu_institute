@@ -32,7 +32,7 @@ const Hero = () => {
           <p className="hp-hero-desc">
             Offline coaching for Class 1–5 with a focus on strong basics in
             Maths, English and Marathi — guided by{' '}
-            <strong>Mrs. Minakshi Swami</strong>.
+            <strong>Mrs. Minakshi</strong>.
           </p>
 
           <div className="hp-hero-btns">

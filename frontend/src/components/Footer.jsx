@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-//import logo from '../assets/Updated_logo.png';
 
 const Footer = () => {
   return (
@@ -17,7 +16,7 @@ const Footer = () => {
           </Link>
 
           <p>
-            <strong>Teacher:</strong> Mrs. Minakshi Swami
+            <strong>Teacher:</strong> Mrs. Minakshi
           </p>
 
           <p className="footer-desc">
@@ -49,8 +48,7 @@ const Footer = () => {
           <h4>Contact Us</h4>
           <ul>
             <li>Nashik, India</li>
-            <li>+91 7875275740</li>
-            <li>dnyanminakshi6@gmail.com</li>
+            <li>sarikaaaaaaa15@gmail.com</li>
           </ul>
         </div>
       </div>
